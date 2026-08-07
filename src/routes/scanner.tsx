@@ -73,7 +73,12 @@ function ScannerPage() {
 
   const loadMutation = useMutation({
     mutationFn: (code: string) => lookup({ data: { pin, code } }),
-    onSuccess: (data) => {
+    onSuccess: (result) => {
+      if (result.error) {
+        toast.error(result.error);
+        return;
+      }
+      const data = result.voucher;
       if (!data) {
         toast.error("Voucher não encontrado neste estabelecimento");
         return;
@@ -85,6 +90,7 @@ function ScannerPage() {
     },
     onError: (error: Error) => toast.error(error.message || "Falha ao consultar o voucher"),
   });
+
 
   const pickupMutation = useMutation({
     mutationFn: () =>
