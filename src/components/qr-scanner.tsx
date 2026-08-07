@@ -94,7 +94,7 @@ export function QrScanner({ onDetected, paused = false, className }: QrScannerPr
         const now = Date.now();
         if (lastValueRef.current.value === raw && now - lastValueRef.current.at < 2500) return;
         lastValueRef.current = { value: raw, at: now };
-        onDetected(raw);
+        onDetectedRef.current(raw);
       };
 
       const tick = async () => {
@@ -135,7 +135,7 @@ export function QrScanner({ onDetected, paused = false, className }: QrScannerPr
           : "Não foi possível acessar a câmera. Use a digitação manual do código.",
       );
     }
-  }, [deviceIndex, onDetected, stop]);
+  }, [deviceIndex, stop]);
 
   useEffect(() => {
     void start();
