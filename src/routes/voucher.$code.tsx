@@ -4,7 +4,6 @@ import { CheckCircle2, Clock, PartyPopper } from "lucide-react";
 
 import { QrCode } from "@/components/qr-code";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { formatBRL, ORDER_STATUS_LABEL } from "@/lib/format";
 import { fetchVoucher } from "@/lib/tapgo.functions";
@@ -95,7 +94,12 @@ function VoucherPage() {
                 {deliveredItems} de {totalItems} itens
               </span>
             </div>
-            <Progress value={totalItems ? (deliveredItems / totalItems) * 100 : 0} className="mt-2" />
+            <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-secondary" role="progressbar" aria-valuenow={deliveredItems} aria-valuemin={0} aria-valuemax={totalItems}>
+              <div
+                className="h-full rounded-full bg-primary transition-all"
+                style={{ width: `${totalItems ? (deliveredItems / totalItems) * 100 : 0}%` }}
+              />
+            </div>
           </div>
         </div>
 
