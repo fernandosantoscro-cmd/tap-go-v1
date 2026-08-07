@@ -10,33 +10,80 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ScannerRouteImport } from './routes/scanner'
+import { Route as MenuCodeRouteImport } from './routes/menu.$code'
+import { Route as PagamentoCodeRouteImport } from './routes/pagamento.$code'
+import { Route as VoucherCodeRouteImport } from './routes/voucher.$code'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ScannerRoute = ScannerRouteImport.update({
+  id: '/scanner',
+  path: '/scanner',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MenuCodeRoute = MenuCodeRouteImport.update({
+  id: '/menu/$code',
+  path: '/menu/$code',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PagamentoCodeRoute = PagamentoCodeRouteImport.update({
+  id: '/pagamento/$code',
+  path: '/pagamento/$code',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VoucherCodeRoute = VoucherCodeRouteImport.update({
+  id: '/voucher/$code',
+  path: '/voucher/$code',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/scanner': typeof ScannerRoute
+  '/menu/$code': typeof MenuCodeRoute
+  '/pagamento/$code': typeof PagamentoCodeRoute
+  '/voucher/$code': typeof VoucherCodeRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/scanner': typeof ScannerRoute
+  '/menu/$code': typeof MenuCodeRoute
+  '/pagamento/$code': typeof PagamentoCodeRoute
+  '/voucher/$code': typeof VoucherCodeRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/scanner': typeof ScannerRoute
+  '/menu/$code': typeof MenuCodeRoute
+  '/pagamento/$code': typeof PagamentoCodeRoute
+  '/voucher/$code': typeof VoucherCodeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    '/' | '/scanner' | '/menu/$code' | '/pagamento/$code' | '/voucher/$code'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/scanner' | '/menu/$code' | '/pagamento/$code' | '/voucher/$code'
+  id:
+    | '__root__'
+    | '/'
+    | '/scanner'
+    | '/menu/$code'
+    | '/pagamento/$code'
+    | '/voucher/$code'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ScannerRoute: typeof ScannerRoute
+  MenuCodeRoute: typeof MenuCodeRoute
+  PagamentoCodeRoute: typeof PagamentoCodeRoute
+  VoucherCodeRoute: typeof VoucherCodeRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,22 +95,44 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/scanner': {
+      id: '/scanner'
+      path: '/scanner'
+      fullPath: '/scanner'
+      preLoaderRoute: typeof ScannerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/menu/$code': {
+      id: '/menu/$code'
+      path: '/menu/$code'
+      fullPath: '/menu/$code'
+      preLoaderRoute: typeof MenuCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pagamento/$code': {
+      id: '/pagamento/$code'
+      path: '/pagamento/$code'
+      fullPath: '/pagamento/$code'
+      preLoaderRoute: typeof PagamentoCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/voucher/$code': {
+      id: '/voucher/$code'
+      path: '/voucher/$code'
+      fullPath: '/voucher/$code'
+      preLoaderRoute: typeof VoucherCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ScannerRoute: ScannerRoute,
+  MenuCodeRoute: MenuCodeRoute,
+  PagamentoCodeRoute: PagamentoCodeRoute,
+  VoucherCodeRoute: VoucherCodeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
