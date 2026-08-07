@@ -1,0 +1,1 @@
+DROP FUNCTION IF EXISTS public.ensure_my_establishment(text, text);

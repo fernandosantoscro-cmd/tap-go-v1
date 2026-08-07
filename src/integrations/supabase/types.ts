@@ -744,17 +744,15 @@ export type Database = {
         }
         Returns: Json
       }
-      ensure_my_establishment:
-        | { Args: { p_document?: string; p_name?: string }; Returns: Json }
-        | {
-            Args: {
-              p_document?: string
-              p_name?: string
-              p_phone?: string
-              p_type?: string
-            }
-            Returns: Json
-          }
+      ensure_my_establishment: {
+        Args: {
+          p_document?: string
+          p_name?: string
+          p_phone?: string
+          p_type?: string
+        }
+        Returns: Json
+      }
       establishment_open_state: { Args: { p_id: string }; Returns: Json }
       gen_public_code: { Args: { p_len?: number }; Returns: string }
       gen_unique_staff_pin: { Args: never; Returns: string }
