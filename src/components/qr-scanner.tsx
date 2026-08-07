@@ -40,6 +40,11 @@ export function QrScanner({ onDetected, paused = false, className }: QrScannerPr
     pausedRef.current = paused;
   }, [paused]);
 
+  useEffect(() => {
+    onDetectedRef.current = onDetected;
+  }, [onDetected]);
+
+
   const stop = useCallback(() => {
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
     rafRef.current = null;
