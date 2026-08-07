@@ -133,7 +133,17 @@ function VoucherPage() {
           </div>
         </div>
 
+        <div className="mt-5 grid gap-2 sm:grid-cols-2">
+          <Button variant="outline" disabled={busy !== null} onClick={() => void handleReceipt("download")}>
+            <Download className="mr-2 size-4" /> Baixar comprovante
+          </Button>
+          <Button variant="outline" disabled={busy !== null} onClick={() => void handleReceipt("share")}>
+            <Share2 className="mr-2 size-4" /> Enviar comprovante
+          </Button>
+        </div>
+
         <Separator className="my-6" />
+
 
         <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">Itens</h2>
         <ul className="mt-4 space-y-3">
