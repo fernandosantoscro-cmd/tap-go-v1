@@ -39,7 +39,7 @@ export const ownerFetchVoucher = createServerFn({ method: "POST" })
       .ilike("code", data.code)
       .maybeSingle();
     if (error) return { voucher: null, error: error.message };
-    if (!order) return { voucher: null, error: "Voucher não encontrado." };
+    if (!order) return { voucher: null, error: `Voucher não encontrado em ${mine.name}. Confirme se o QR Code é deste estabelecimento.` };
     if (order.establishment_id !== mine.id) {
       return { voucher: null, error: `Este voucher não é de ${mine.name}. Ele pertence a outro estabelecimento.` };
     }
