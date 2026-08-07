@@ -100,7 +100,7 @@ function AdminLayout() {
           >
             <span className="flex items-center gap-2">
               <ScanLine className="size-4" aria-hidden />
-              Scanner do balcão
+              Balcão com PIN (tablet)
             </span>
           </a>
         </nav>
