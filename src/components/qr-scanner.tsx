@@ -27,6 +27,9 @@ export function QrScanner({ onDetected, paused = false, className }: QrScannerPr
   const streamRef = useRef<MediaStream | null>(null);
   const lastValueRef = useRef<{ value: string; at: number }>({ value: "", at: 0 });
   const pausedRef = useRef(paused);
+  // Mantém o callback em ref: assim a câmera não reinicia a cada render do pai.
+  const onDetectedRef = useRef(onDetected);
+
 
   const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
   const [deviceIndex, setDeviceIndex] = useState(0);
@@ -36,6 +39,11 @@ export function QrScanner({ onDetected, paused = false, className }: QrScannerPr
   useEffect(() => {
     pausedRef.current = paused;
   }, [paused]);
+
+  useEffect(() => {
+    onDetectedRef.current = onDetected;
+  }, [onDetected]);
+
 
   const stop = useCallback(() => {
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
@@ -86,7 +94,7 @@ export function QrScanner({ onDetected, paused = false, className }: QrScannerPr
         const now = Date.now();
         if (lastValueRef.current.value === raw && now - lastValueRef.current.at < 2500) return;
         lastValueRef.current = { value: raw, at: now };
-        onDetected(raw);
+        onDetectedRef.current(raw);
       };
 
       const tick = async () => {
@@ -127,7 +135,7 @@ export function QrScanner({ onDetected, paused = false, className }: QrScannerPr
           : "Não foi possível acessar a câmera. Use a digitação manual do código.",
       );
     }
-  }, [deviceIndex, onDetected, stop]);
+  }, [deviceIndex, stop]);
 
   useEffect(() => {
     void start();
