@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { useCategories, useMenu, useProducts, useTableMutation } from "@/lib/admin-db";
+import { useCategories, useMenu, useProducts, useRegenerateMenuCode, useTableMutation } from "@/lib/admin-db";
 import { formatBRL } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/admin/cardapios/$menuId")({
