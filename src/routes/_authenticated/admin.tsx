@@ -112,7 +112,13 @@ function AdminLayout() {
             <Skeleton className="h-40 w-full" />
           </div>
         ) : establishment.isError ? (
-          <p className="text-sm text-destructive">Não foi possível carregar seu estabelecimento.</p>
+          <div className="space-y-3">
+            <p className="text-sm text-destructive">Não foi possível carregar seu estabelecimento.</p>
+            <Button variant="outline" onClick={() => void establishment.refetch()}>
+              Tentar novamente
+            </Button>
+          </div>
+
         ) : (
           <Outlet />
         )}
