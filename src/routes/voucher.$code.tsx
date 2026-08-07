@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, notFound } from "@tanstack/react-router";
-import { CheckCircle2, Clock, Download, PartyPopper, Share2 } from "lucide-react";
+import { CheckCircle2, Clock, Download, Flame, PartyPopper, Share2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -11,7 +11,8 @@ import { Separator } from "@/components/ui/separator";
 import { formatBRL, ORDER_STATUS_LABEL } from "@/lib/format";
 import { downloadReceipt, shareReceipt } from "@/lib/receipt";
 import { fetchVoucher } from "@/lib/tapgo.functions";
-import type { VoucherPayload } from "@/lib/tapgo-types";
+import type { VoucherItem, VoucherPayload } from "@/lib/tapgo-types";
+import { isReadyForPickup, kitchenItemLabel, splitVoucherItems } from "@/lib/voucher-groups";
 
 
 export const Route = createFileRoute("/voucher/$code")({
@@ -86,6 +87,38 @@ function VoucherPage() {
       setBusy(null);
     }
   }
+
+  const { counter: counterItems, kitchen: kitchenItems } = splitVoucherItems(voucher);
+
+  function renderItem(item: VoucherItem) {
+    const done = item.available_quantity === 0;
+    const ready = isReadyForPickup(item);
+    return (
+      <li key={item.id} className="flex items-center gap-3 rounded-2xl border p-4">
+        <span aria-hidden className="text-2xl">
+          {item.emoji ?? (item.requires_prep ? "🍽️" : "🍸")}
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="font-medium">{item.name}</p>
+          <p className="text-sm text-muted-foreground">
+            {done
+              ? `${item.quantity} retirado${item.quantity > 1 ? "s" : ""}`
+              : `${item.available_quantity} de ${item.quantity} disponível para retirada`}
+          </p>
+        </div>
+        {done ? (
+          <CheckCircle2 className="size-5 text-success" aria-label="Item retirado" />
+        ) : item.requires_prep ? (
+          <span
+            className={`flex items-center gap-1 text-xs ${ready ? "text-success" : "text-muted-foreground"}`}
+          >
+            <Clock className="size-3.5" aria-hidden /> {kitchenItemLabel(item, voucher.order.paid_at)}
+          </span>
+        ) : null}
+      </li>
+    );
+  }
+
 
 
   return (
