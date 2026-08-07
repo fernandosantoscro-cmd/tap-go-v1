@@ -118,10 +118,27 @@ function MenuDetail() {
       <section className="grid gap-6 rounded-2xl border bg-background p-6 lg:grid-cols-[auto_1fr]">
         <div id="menu-qr" className="flex flex-col items-center gap-3">
           <QrCode value={url} size={260} title={`QR Code do cardápio ${menu.data.name}`} />
-          <Button variant="outline" size="sm" onClick={downloadQr}>
-            <Download className="mr-2 size-4" /> Baixar QR
-          </Button>
+          <div className="flex flex-wrap justify-center gap-2">
+            <Button variant="outline" size="sm" onClick={downloadQr}>
+              <Download className="mr-2 size-4" /> Baixar QR
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={regenerate.isPending}
+              onClick={() => {
+                if (!window.confirm("Gerar um novo código? Os QR Codes impressos antigos deixarão de funcionar.")) return;
+                regenerate.mutate(menuId, {
+                  onSuccess: () => toast.success("Novo código gerado — imprima o QR atualizado"),
+                  onError: (error: Error) => toast.error(error.message),
+                });
+              }}
+            >
+              <RefreshCcw className="mr-2 size-4" /> Novo código
+            </Button>
+          </div>
         </div>
+
         <div>
           <h2 className="text-xl font-semibold">Escaneie com o celular</h2>
           <p className="mt-2 text-sm text-muted-foreground">
