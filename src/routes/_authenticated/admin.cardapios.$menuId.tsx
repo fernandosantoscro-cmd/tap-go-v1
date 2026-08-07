@@ -271,7 +271,11 @@ function MenuDetail() {
               value={form.prep_minutes}
               onChange={(e) => setForm({ ...form, prep_minutes: e.target.value })}
             />
+            <p className="mt-1 text-xs text-muted-foreground">
+              0 = bebida/balcão (retirada imediata). Acima de 0 vai para a cozinha e só libera após “Marcar pronto”.
+            </p>
           </div>
+
           <div>
             <Label htmlFor="p-stock">Estoque (vazio = ilimitado)</Label>
             <Input
