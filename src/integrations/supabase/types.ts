@@ -58,33 +58,51 @@ export type Database = {
       }
       establishments: {
         Row: {
+          accepting_orders: boolean
+          business_hours: Json
+          closed_message: string | null
           created_at: string
           document: string | null
           id: string
           logo_url: string | null
           name: string
           owner_id: string | null
+          phone: string | null
           slug: string
+          timezone: string
+          type: string | null
           updated_at: string
         }
         Insert: {
+          accepting_orders?: boolean
+          business_hours?: Json
+          closed_message?: string | null
           created_at?: string
           document?: string | null
           id?: string
           logo_url?: string | null
           name: string
           owner_id?: string | null
+          phone?: string | null
           slug: string
+          timezone?: string
+          type?: string | null
           updated_at?: string
         }
         Update: {
+          accepting_orders?: boolean
+          business_hours?: Json
+          closed_message?: string | null
           created_at?: string
           document?: string | null
           id?: string
           logo_url?: string | null
           name?: string
           owner_id?: string | null
+          phone?: string | null
           slug?: string
+          timezone?: string
+          type?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -726,10 +744,18 @@ export type Database = {
         }
         Returns: Json
       }
-      ensure_my_establishment: {
-        Args: { p_document?: string; p_name?: string }
-        Returns: Json
-      }
+      ensure_my_establishment:
+        | { Args: { p_document?: string; p_name?: string }; Returns: Json }
+        | {
+            Args: {
+              p_document?: string
+              p_name?: string
+              p_phone?: string
+              p_type?: string
+            }
+            Returns: Json
+          }
+      establishment_open_state: { Args: { p_id: string }; Returns: Json }
       gen_public_code: { Args: { p_len?: number }; Returns: string }
       gen_unique_staff_pin: { Args: never; Returns: string }
       get_menu_by_code: { Args: { p_code: string }; Returns: Json }
@@ -739,6 +765,7 @@ export type Database = {
         Returns: Json
       }
       owns_establishment: { Args: { p_id: string }; Returns: boolean }
+      regenerate_menu_code: { Args: { p_menu_id: string }; Returns: Json }
       register_pickup: {
         Args: { p_items: Json; p_order_code: string; p_pin: string }
         Returns: Json

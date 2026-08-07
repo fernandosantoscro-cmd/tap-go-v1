@@ -2,6 +2,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
+import type { DateRange } from "@/lib/date-range";
+import type { OpenState } from "@/lib/tapgo-types";
 
 type Row<T extends keyof Database["public"]["Tables"]> = Database["public"]["Tables"][T]["Row"];
 
@@ -17,9 +19,29 @@ export type PaymentMethodRow = Row<"payment_methods">;
 export type PickupRow = Row<"pickups">;
 export type LogRow = Row<"logs">;
 
+export const SIGNUP_KEY = "tapgo.signup";
+
+export interface PendingSignup {
+  name?: string;
+  type?: string;
+  phone?: string;
+  document?: string;
+}
+
 function unwrap<T>(result: { data: T | null; error: { message: string } | null }): T {
   if (result.error) throw new Error(result.error.message);
   return result.data as T;
+}
+
+function readPendingSignup(): PendingSignup | null {
+  if (typeof window === "undefined") return null;
+  const raw = localStorage.getItem(SIGNUP_KEY);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as PendingSignup;
+  } catch {
+    return null;
+  }
 }
 
 /** Garante que o usuário logado tenha um estabelecimento (cria no primeiro acesso). */
@@ -28,11 +50,57 @@ export function useEstablishment() {
     queryKey: ["establishment"],
     staleTime: 60_000,
     queryFn: async (): Promise<Establishment> => {
-      const result = await supabase.rpc("ensure_my_establishment", {});
+      const pending = readPendingSignup();
+      const args: { p_name?: string; p_document?: string; p_type?: string; p_phone?: string } = {};
+      if (pending?.name) args.p_name = pending.name;
+      if (pending?.document) args.p_document = pending.document;
+      if (pending?.type) args.p_type = pending.type;
+      if (pending?.phone) args.p_phone = pending.phone;
+      const result = await supabase.rpc("ensure_my_establishment", args);
+
+      if (!result.error && typeof window !== "undefined") localStorage.removeItem(SIGNUP_KEY);
       return unwrap(result) as unknown as Establishment;
     },
   });
 }
+
+/** Estado "aberto agora" calculado no banco (respeita fuso e horários). */
+export function useOpenState(establishmentId?: string) {
+  return useQuery({
+    queryKey: ["open_state", establishmentId],
+    enabled: Boolean(establishmentId),
+    refetchInterval: 60_000,
+    queryFn: async (): Promise<OpenState> =>
+      unwrap(await supabase.rpc("establishment_open_state", { p_id: establishmentId! })) as unknown as OpenState,
+  });
+}
+
+export function useUpdateSettings() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (values: { id: string } & Database["public"]["Tables"]["establishments"]["Update"]) => {
+      const { id, ...patch } = values;
+      return unwrap(await supabase.from("establishments").update(patch).eq("id", id).select().single());
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["establishment"] });
+      void queryClient.invalidateQueries({ queryKey: ["open_state"] });
+    },
+  });
+}
+
+export function useRegenerateMenuCode() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (menuId: string) =>
+      unwrap(await supabase.rpc("regenerate_menu_code", { p_menu_id: menuId })) as unknown as { code: string },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["menus"] });
+      void queryClient.invalidateQueries({ queryKey: ["menu"] });
+    },
+  });
+}
+
 
 export function useUpdateEstablishment() {
   const queryClient = useQueryClient();
@@ -131,54 +199,61 @@ export interface AdminOrder extends OrderRow {
   order_items: OrderItemRow[];
 }
 
-export function useOrders(establishmentId?: string) {
+export function useOrders(establishmentId?: string, range?: DateRange) {
   return useQuery({
-    queryKey: ["orders", establishmentId],
+    queryKey: ["orders", establishmentId, range?.from ?? null, range?.to ?? null],
     enabled: Boolean(establishmentId),
     refetchInterval: 15_000,
-    queryFn: async (): Promise<AdminOrder[]> =>
-      unwrap(
-        await supabase
-          .from("orders")
-          .select("*, order_items(*)")
-          .eq("establishment_id", establishmentId!)
-          .order("created_at", { ascending: false })
-          .limit(200),
-      ) as AdminOrder[],
+    queryFn: async (): Promise<AdminOrder[]> => {
+      let query = supabase
+        .from("orders")
+        .select("*, order_items(*)")
+        .eq("establishment_id", establishmentId!)
+        .order("created_at", { ascending: false })
+        .limit(500);
+      if (range?.from) query = query.gte("created_at", range.from);
+      if (range?.to) query = query.lt("created_at", range.to);
+      return unwrap(await query) as AdminOrder[];
+    },
   });
 }
 
-export function usePickups(establishmentId?: string) {
+export function usePickups(establishmentId?: string, range?: DateRange) {
   return useQuery({
-    queryKey: ["pickups", establishmentId],
+    queryKey: ["pickups", establishmentId, range?.from ?? null, range?.to ?? null],
     enabled: Boolean(establishmentId),
-    queryFn: async (): Promise<PickupRow[]> =>
-      unwrap(
-        await supabase
-          .from("pickups")
-          .select("*")
-          .eq("establishment_id", establishmentId!)
-          .order("created_at", { ascending: false })
-          .limit(300),
-      ),
+    queryFn: async (): Promise<PickupRow[]> => {
+      let query = supabase
+        .from("pickups")
+        .select("*")
+        .eq("establishment_id", establishmentId!)
+        .order("created_at", { ascending: false })
+        .limit(500);
+      if (range?.from) query = query.gte("created_at", range.from);
+      if (range?.to) query = query.lt("created_at", range.to);
+      return unwrap(await query);
+    },
   });
 }
 
-export function useLogs(establishmentId?: string) {
+export function useLogs(establishmentId?: string, range?: DateRange) {
   return useQuery({
-    queryKey: ["logs", establishmentId],
+    queryKey: ["logs", establishmentId, range?.from ?? null, range?.to ?? null],
     enabled: Boolean(establishmentId),
-    queryFn: async (): Promise<LogRow[]> =>
-      unwrap(
-        await supabase
-          .from("logs")
-          .select("*")
-          .eq("establishment_id", establishmentId!)
-          .order("created_at", { ascending: false })
-          .limit(80),
-      ),
+    queryFn: async (): Promise<LogRow[]> => {
+      let query = supabase
+        .from("logs")
+        .select("*")
+        .eq("establishment_id", establishmentId!)
+        .order("created_at", { ascending: false })
+        .limit(200);
+      if (range?.from) query = query.gte("created_at", range.from);
+      if (range?.to) query = query.lt("created_at", range.to);
+      return unwrap(await query);
+    },
   });
 }
+
 
 export function useSetOrderStatus() {
   const queryClient = useQueryClient();

@@ -103,6 +103,9 @@ function MenuPage() {
       return copy;
     });
 
+  const openState = menu.open_state ?? null;
+  const closed = openState ? !openState.open : false;
+
   return (
     <div className="min-h-screen bg-background pb-32">
       <header className="border-b bg-secondary/50">
@@ -117,8 +120,35 @@ function MenuPage() {
               {menu.event.location ? ` · ${menu.event.location}` : ""}
             </p>
           )}
+          {openState && (
+            <p
+              className={cn(
+                "mt-3 inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium",
+                closed ? "bg-destructive/10 text-destructive" : "bg-success/15 text-success",
+              )}
+            >
+              <span className="size-2 rounded-full bg-current" aria-hidden />
+              {closed ? "Fechado agora" : "Aberto agora"}
+              {openState.local_time ? ` · ${openState.local_time}` : ""}
+            </p>
+          )}
         </div>
       </header>
+
+      {closed && (
+        <div className="mx-auto max-w-xl px-5 pt-5">
+          <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-4">
+            <p className="font-medium text-destructive">Não estamos aceitando pedidos agora</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {openState?.closed_message ??
+                (openState?.reopen_at
+                  ? `Voltamos a atender às ${openState.reopen_at}.`
+                  : "Confira o horário de funcionamento com a equipe do balcão.")}
+            </p>
+          </div>
+        </div>
+      )}
+
 
       <nav aria-label="Categorias" className="sticky top-0 z-20 border-b bg-background/95 backdrop-blur">
         <div className="mx-auto flex max-w-xl gap-2 overflow-x-auto px-5 py-3">
@@ -309,14 +339,17 @@ function MenuPage() {
 
               <Button
                 className="mt-4 h-14 w-full text-base"
-                disabled={mutation.isPending || lines.length === 0}
+                disabled={mutation.isPending || lines.length === 0 || closed}
                 onClick={() => mutation.mutate()}
               >
-                {mutation.isPending ? "Criando pedido…" : "Ir para o pagamento"}
+                {closed ? "Fechado agora" : mutation.isPending ? "Criando pedido…" : "Ir para o pagamento"}
               </Button>
               <p className="mt-3 text-center text-xs text-muted-foreground">
-                Sem cadastro. Você receberá um QR Code para retirar seus produtos.
+                {closed
+                  ? openState?.closed_message ?? "Os pedidos reabrem no próximo horário de funcionamento."
+                  : "Sem cadastro. Você receberá um QR Code para retirar seus produtos."}
               </p>
+
             </div>
           </div>
         </div>

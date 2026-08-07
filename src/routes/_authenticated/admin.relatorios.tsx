@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { BarChart3, Package, Receipt, TrendingUp } from "lucide-react";
+import { BarChart3, Download, Package, Receipt, TrendingUp } from "lucide-react";
+import { useState } from "react";
 import {
   Bar,
   BarChart,
@@ -10,7 +11,10 @@ import {
   YAxis,
 } from "recharts";
 
+import { DateRangeFilter } from "@/components/date-range-filter";
+import { Button } from "@/components/ui/button";
 import { useEstablishment, useLogs, useOrders, usePickups } from "@/lib/admin-db";
+import { buildRange, downloadCsv, previousRange, toCsv, type DateRange } from "@/lib/date-range";
 import { formatBRL, formatDateTime } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/admin/relatorios")({
@@ -19,9 +23,12 @@ export const Route = createFileRoute("/_authenticated/admin/relatorios")({
 
 function ReportsPage() {
   const establishment = useEstablishment();
-  const orders = useOrders(establishment.data?.id);
-  const pickups = usePickups(establishment.data?.id);
-  const logs = useLogs(establishment.data?.id);
+  const [range, setRange] = useState<DateRange>(() => buildRange("30d"));
+  const [custom, setCustom] = useState({ from: "", to: "" });
+  const orders = useOrders(establishment.data?.id, range);
+  const previous = useOrders(establishment.data?.id, previousRange(range));
+  const pickups = usePickups(establishment.data?.id, range);
+  const logs = useLogs(establishment.data?.id, range);
 
   const paid = (orders.data ?? []).filter((order) => order.payment_status === "pago");
   const revenue = paid.reduce((sum, order) => sum + order.total_cents, 0);
@@ -30,6 +37,11 @@ function ReportsPage() {
     0,
   );
   const ticket = paid.length ? Math.round(revenue / paid.length) : 0;
+
+  const previousRevenue = (previous.data ?? [])
+    .filter((order) => order.payment_status === "pago")
+    .reduce((sum, order) => sum + order.total_cents, 0);
+  const delta = previousRevenue ? Math.round(((revenue - previousRevenue) / previousRevenue) * 100) : null;
 
   const byProduct = new Map<string, number>();
   paid.forEach((order) =>
@@ -49,12 +61,45 @@ function ReportsPage() {
     { label: "Ticket médio", value: formatBRL(ticket), icon: BarChart3 },
   ];
 
+  function exportCsv() {
+    const rows: (string | number)[][] = [
+      ["Produto", "Quantidade"],
+      ...[...byProduct.entries()].sort((a, b) => b[1] - a[1]),
+      [],
+      ["Faturamento (R$)", (revenue / 100).toFixed(2).replace(".", ",")],
+      ["Pedidos pagos", paid.length],
+      ["Itens vendidos", itemsSold],
+      ["Ticket médio (R$)", (ticket / 100).toFixed(2).replace(".", ",")],
+      ["Período", range.label],
+    ];
+    downloadCsv(`tapgo-relatorio-${range.key}.csv`, toCsv(rows));
+  }
+
   return (
     <div className="space-y-8">
-      <header>
-        <h1 className="text-3xl font-semibold">Relatórios</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Consolidado do estabelecimento desde o início da operação.</p>
+      <header className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-semibold">Relatórios</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {range.label}
+            {delta !== null && (
+              <>
+                {" · "}
+                <span className={delta >= 0 ? "text-success" : "text-destructive"}>
+                  {delta >= 0 ? "+" : ""}
+                  {delta}% vs. período anterior
+                </span>
+              </>
+            )}
+          </p>
+        </div>
+        <Button variant="outline" size="sm" onClick={exportCsv}>
+          <Download className="mr-2 size-4" /> Exportar CSV
+        </Button>
       </header>
+
+      <DateRangeFilter value={range} onChange={setRange} custom={custom} onCustomChange={setCustom} />
+
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {cards.map((card) => (

@@ -9,6 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { lovable } from "@/integrations/lovable";
 import { supabase } from "@/integrations/supabase/client";
+import { SIGNUP_KEY } from "@/lib/admin-db";
+
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -29,6 +31,9 @@ function AuthPage() {
   const navigate = useNavigate();
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [name, setName] = useState("");
+  const [type, setType] = useState("bar");
+  const [phone, setPhone] = useState("");
+  const [document, setDocument] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -52,11 +57,16 @@ function AuthPage() {
     };
   }, [navigate]);
 
+  function savePending() {
+    localStorage.setItem(SIGNUP_KEY, JSON.stringify({ name, type, phone, document }));
+  }
+
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     setLoading(true);
     try {
       if (mode === "signup") {
+        savePending();
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
@@ -70,7 +80,6 @@ function AuthPage() {
           toast.success("Confirme seu e-mail para ativar a conta.");
           return;
         }
-        localStorage.setItem("tapgo.establishment.name", name);
         toast.success("Conta criada!");
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -83,10 +92,19 @@ function AuthPage() {
     }
   }
 
+
   async function handleGoogle() {
+    if (mode === "signup") {
+      if (name.trim().length < 2) {
+        toast.error("Informe o nome do estabelecimento antes de continuar");
+        return;
+      }
+      savePending();
+    }
     const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin + "/auth" });
     if (result.error) toast.error("Não foi possível entrar com o Google");
   }
+
 
   if (checking) {
     return (
@@ -130,18 +148,60 @@ function AuthPage() {
 
           <form className="grid gap-4" onSubmit={(event) => void handleSubmit(event)}>
             {mode === "signup" && (
-              <div>
-                <Label htmlFor="name">Nome do estabelecimento</Label>
-                <Input
-                  id="name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Arena Live Club"
-                  className="mt-1"
-                  required
-                />
-              </div>
+              <>
+                <div>
+                  <Label htmlFor="name">Nome do estabelecimento</Label>
+                  <Input
+                    id="name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Ex.: Bar do Zé"
+                    className="mt-1"
+                    required
+                  />
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <Label htmlFor="type">Tipo de negócio</Label>
+                    <select
+                      id="type"
+                      className="mt-1 h-10 w-full rounded-md border bg-background px-3 text-sm"
+                      value={type}
+                      onChange={(e) => setType(e.target.value)}
+                    >
+                      <option value="bar">Bar</option>
+                      <option value="festival">Festival</option>
+                      <option value="arena">Arena / casa de show</option>
+                      <option value="beach_club">Beach club</option>
+                      <option value="restaurante">Restaurante</option>
+                      <option value="outro">Outro</option>
+                    </select>
+                  </div>
+                  <div>
+                    <Label htmlFor="phone">WhatsApp</Label>
+                    <Input
+                      id="phone"
+                      inputMode="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="(11) 99999-0000"
+                      className="mt-1"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="document">CNPJ ou CPF (opcional)</Label>
+                  <Input
+                    id="document"
+                    value={document}
+                    onChange={(e) => setDocument(e.target.value)}
+                    placeholder="00.000.000/0000-00"
+                    className="mt-1"
+                  />
+                </div>
+              </>
             )}
+
             <div>
               <Label htmlFor="email">E-mail</Label>
               <Input

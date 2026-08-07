@@ -1,13 +1,18 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, notFound } from "@tanstack/react-router";
-import { CheckCircle2, Clock, PartyPopper } from "lucide-react";
+import { CheckCircle2, Clock, Download, PartyPopper, Share2 } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 
 import { QrCode } from "@/components/qr-code";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { formatBRL, ORDER_STATUS_LABEL } from "@/lib/format";
+import { downloadReceipt, shareReceipt } from "@/lib/receipt";
 import { fetchVoucher } from "@/lib/tapgo.functions";
 import type { VoucherPayload } from "@/lib/tapgo-types";
+
 
 export const Route = createFileRoute("/voucher/$code")({
   loader: async ({ params }) => {
@@ -57,6 +62,31 @@ function VoucherPage() {
   const complete = deliveredItems >= totalItems;
   const voucherUrl =
     typeof window === "undefined" ? `/voucher/${code}` : `${window.location.origin}/voucher/${code}`;
+  const [busy, setBusy] = useState<"share" | "download" | null>(null);
+
+  async function handleReceipt(action: "share" | "download") {
+    setBusy(action);
+    try {
+      if (action === "download") {
+        await downloadReceipt(voucher);
+        toast.success("Comprovante baixado");
+      } else {
+        const result = await shareReceipt(voucher);
+        toast.success(
+          result === "shared"
+            ? "Comprovante compartilhado"
+            : result === "copied"
+              ? "Link do comprovante copiado"
+              : "Comprovante baixado",
+        );
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Não foi possível gerar o comprovante");
+    } finally {
+      setBusy(null);
+    }
+  }
+
 
   return (
     <div className="min-h-screen bg-background pb-16">
@@ -103,7 +133,17 @@ function VoucherPage() {
           </div>
         </div>
 
+        <div className="mt-5 grid gap-2 sm:grid-cols-2">
+          <Button variant="outline" disabled={busy !== null} onClick={() => void handleReceipt("download")}>
+            <Download className="mr-2 size-4" /> Baixar comprovante
+          </Button>
+          <Button variant="outline" disabled={busy !== null} onClick={() => void handleReceipt("share")}>
+            <Share2 className="mr-2 size-4" /> Enviar comprovante
+          </Button>
+        </div>
+
         <Separator className="my-6" />
+
 
         <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">Itens</h2>
         <ul className="mt-4 space-y-3">

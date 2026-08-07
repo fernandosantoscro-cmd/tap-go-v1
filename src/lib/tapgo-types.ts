@@ -24,9 +24,20 @@ export interface MenuCategory {
   products: MenuProduct[] | null;
 }
 
+export interface OpenState {
+  open: boolean;
+  within_hours: boolean;
+  accepting_orders: boolean;
+  reopen_at: string | null;
+  closed_message: string | null;
+  local_time: string | null;
+}
+
 export interface MenuPayload {
   menu: { id: string; name: string; code: string; image_url: string | null };
-  establishment: { id: string; name: string; logo_url: string | null };
+  establishment: { id: string; name: string; logo_url: string | null; type?: string | null };
+  open_state?: OpenState | null;
+
   event: {
     id: string;
     name: string;
