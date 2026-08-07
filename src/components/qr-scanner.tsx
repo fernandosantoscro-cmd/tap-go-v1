@@ -27,6 +27,9 @@ export function QrScanner({ onDetected, paused = false, className }: QrScannerPr
   const streamRef = useRef<MediaStream | null>(null);
   const lastValueRef = useRef<{ value: string; at: number }>({ value: "", at: 0 });
   const pausedRef = useRef(paused);
+  // Mantém o callback em ref: assim a câmera não reinicia a cada render do pai.
+  const onDetectedRef = useRef(onDetected);
+
 
   const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
   const [deviceIndex, setDeviceIndex] = useState(0);
