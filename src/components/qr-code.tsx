@@ -1,5 +1,5 @@
 import QRCode from "qrcode";
-import { useEffect, useRef } from "react";
+import { useEffect, useState } from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -10,33 +10,45 @@ interface QrCodeProps {
   title?: string;
 }
 
-/** Renderiza um QR Code real em canvas (escaneável por qualquer câmera). */
+/** Renderiza um QR Code real (escaneável por qualquer câmera). */
 export function QrCode({ value, size = 240, className, title }: QrCodeProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [src, setSrc] = useState<string | null>(null);
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas || !value) return;
-    void QRCode.toCanvas(canvas, value, {
-      width: size,
+    let active = true;
+    if (!value) return;
+    QRCode.toDataURL(value, {
+      width: size * 2,
       margin: 1,
       errorCorrectionLevel: "M",
-      color: { dark: "#141414", light: "#ffffff" },
-    });
+      color: { dark: "#141414ff", light: "#ffffffff" },
+    })
+      .then((url) => {
+        if (active) setSrc(url);
+      })
+      .catch(() => setSrc(null));
+    return () => {
+      active = false;
+    };
   }, [value, size]);
 
+  if (!src) {
+    return (
+      <div
+        style={{ width: size, height: size }}
+        className={cn("animate-pulse rounded-xl bg-secondary", className)}
+        aria-hidden
+      />
+    );
+  }
+
   return (
-    <canvas
-      ref={canvasRef}
+    <img
+      src={src}
       width={size}
       height={size}
-      role="img"
-      aria-label={title ?? `QR Code ${value}`}
-      className={cn("rounded-xl bg-background", className)}
+      alt={title ?? `QR Code ${value}`}
+      className={cn("rounded-xl bg-white", className)}
     />
   );
-}
-
-export async function qrCodeDataUrl(value: string, size = 640): Promise<string> {
-  return QRCode.toDataURL(value, { width: size, margin: 2, errorCorrectionLevel: "M" });
 }
