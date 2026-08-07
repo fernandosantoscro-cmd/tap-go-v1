@@ -27,6 +27,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
 const nav = [
   { to: "/admin", label: "Visão geral", icon: LayoutDashboard, exact: true },
   { to: "/admin/pedidos", label: "Pedidos", icon: ReceiptText },
+  { to: "/admin/retirada", label: "Retirada (scanner)", icon: ScanLine },
   { to: "/admin/eventos", label: "Eventos", icon: CalendarDays },
   { to: "/admin/cardapios", label: "Cardápios & QR", icon: QrCode },
   { to: "/admin/equipe", label: "Equipe & pagamentos", icon: Users },
@@ -99,7 +100,7 @@ function AdminLayout() {
           >
             <span className="flex items-center gap-2">
               <ScanLine className="size-4" aria-hidden />
-              Scanner do balcão
+              Balcão com PIN (tablet)
             </span>
           </a>
         </nav>

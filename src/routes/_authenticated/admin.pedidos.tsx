@@ -65,6 +65,17 @@ function OrdersPage() {
     );
   }
 
+  function markItemReady(order: AdminOrder, itemId: string, name: string) {
+    setStatus.mutate(
+      { orderId: order.id, status: "pronto", itemId },
+      {
+        onSuccess: () => toast.success(`${name} pronto para retirada`),
+        onError: (error: Error) => toast.error(error.message),
+      },
+    );
+  }
+
+
   function exportCsv() {
     const rows: (string | number)[][] = [
       ["Código", "Data", "Cliente", "Pagamento", "Status pagamento", "Status", "Total (R$)", "Itens"],
@@ -140,17 +151,42 @@ function OrdersPage() {
               </div>
 
               <ul className="mt-4 space-y-1 text-sm">
-                {order.order_items.map((item) => (
-                  <li key={item.id} className="flex items-center justify-between gap-3">
-                    <span>
-                      {item.emoji ?? "🍸"} {item.quantity}× {item.product_name}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {item.delivered_quantity}/{item.quantity} retirado
-                    </span>
-                  </li>
-                ))}
+                {order.order_items.map((item) => {
+                  const ready = item.status === "pronto" || item.status === "entregue";
+                  return (
+                    <li key={item.id} className="flex items-center justify-between gap-3">
+                      <span>
+                        {item.emoji ?? (item.requires_prep ? "🍽️" : "🍸")} {item.quantity}× {item.product_name}
+                        {item.requires_prep ? (
+                          <span className="ml-2 text-xs text-muted-foreground">
+                            cozinha · {item.prep_minutes} min
+                          </span>
+                        ) : null}
+                      </span>
+                      <span className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground">
+                          {item.delivered_quantity}/{item.quantity} retirado
+                        </span>
+                        {item.requires_prep && order.payment_status === "pago" && item.delivered_quantity < item.quantity ? (
+                          ready ? (
+                            <Badge variant="default">Pronto</Badge>
+                          ) : (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-7"
+                              onClick={() => markItemReady(order, item.id, item.product_name)}
+                            >
+                              Marcar pronto
+                            </Button>
+                          )
+                        ) : null}
+                      </span>
+                    </li>
+                  );
+                })}
               </ul>
+
 
               <p className="mt-3 text-xs text-muted-foreground">
                 Retirada: {delivered} de {total} itens

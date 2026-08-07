@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, notFound } from "@tanstack/react-router";
-import { CheckCircle2, Clock, Download, PartyPopper, Share2 } from "lucide-react";
+import { CheckCircle2, Clock, Download, Flame, PartyPopper, Share2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -11,7 +11,8 @@ import { Separator } from "@/components/ui/separator";
 import { formatBRL, ORDER_STATUS_LABEL } from "@/lib/format";
 import { downloadReceipt, shareReceipt } from "@/lib/receipt";
 import { fetchVoucher } from "@/lib/tapgo.functions";
-import type { VoucherPayload } from "@/lib/tapgo-types";
+import type { VoucherItem, VoucherPayload } from "@/lib/tapgo-types";
+import { isReadyForPickup, kitchenItemLabel, splitVoucherItems } from "@/lib/voucher-groups";
 
 
 export const Route = createFileRoute("/voucher/$code")({
@@ -87,6 +88,38 @@ function VoucherPage() {
     }
   }
 
+  const { counter: counterItems, kitchen: kitchenItems } = splitVoucherItems(voucher);
+
+  function renderItem(item: VoucherItem) {
+    const done = item.available_quantity === 0;
+    const ready = isReadyForPickup(item);
+    return (
+      <li key={item.id} className="flex items-center gap-3 rounded-2xl border p-4">
+        <span aria-hidden className="text-2xl">
+          {item.emoji ?? (item.requires_prep ? "🍽️" : "🍸")}
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="font-medium">{item.name}</p>
+          <p className="text-sm text-muted-foreground">
+            {done
+              ? `${item.quantity} retirado${item.quantity > 1 ? "s" : ""}`
+              : `${item.available_quantity} de ${item.quantity} disponível para retirada`}
+          </p>
+        </div>
+        {done ? (
+          <CheckCircle2 className="size-5 text-success" aria-label="Item retirado" />
+        ) : item.requires_prep ? (
+          <span
+            className={`flex items-center gap-1 text-xs ${ready ? "text-success" : "text-muted-foreground"}`}
+          >
+            <Clock className="size-3.5" aria-hidden /> {kitchenItemLabel(item, voucher.order.paid_at)}
+          </span>
+        ) : null}
+      </li>
+    );
+  }
+
+
 
   return (
     <div className="min-h-screen bg-background pb-16">
@@ -145,34 +178,26 @@ function VoucherPage() {
         <Separator className="my-6" />
 
 
-        <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">Itens</h2>
-        <ul className="mt-4 space-y-3">
-          {voucher.items.map((item) => {
-            const done = item.available_quantity === 0;
-            return (
-              <li key={item.id} className="flex items-center gap-3 rounded-2xl border p-4">
-                <span aria-hidden className="text-2xl">
-                  {item.emoji ?? "🍸"}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="font-medium">{item.name}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {done
-                      ? `${item.quantity} retirado${item.quantity > 1 ? "s" : ""}`
-                      : `${item.available_quantity} de ${item.quantity} disponível para retirada`}
-                  </p>
-                </div>
-                {done ? (
-                  <CheckCircle2 className="size-5 text-success" aria-label="Item retirado" />
-                ) : item.requires_prep ? (
-                  <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <Clock className="size-3.5" aria-hidden /> {item.prep_minutes} min
-                  </span>
-                ) : null}
-              </li>
-            );
-          })}
-        </ul>
+        {counterItems.length > 0 && (
+          <>
+            <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">
+              Retire agora no balcão
+            </h2>
+            <ul className="mt-4 space-y-3">{counterItems.map((item) => renderItem(item))}</ul>
+          </>
+        )}
+
+        {kitchenItems.length > 0 && (
+          <>
+            <h2 className="mt-8 flex items-center gap-2 text-sm font-semibold uppercase tracking-widest text-muted-foreground">
+              <Flame className="size-3.5" aria-hidden /> Cozinha
+            </h2>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Volte ao balcão com o mesmo QR Code quando estiver pronto.
+            </p>
+            <ul className="mt-4 space-y-3">{kitchenItems.map((item) => renderItem(item))}</ul>
+          </>
+        )}
 
         {complete && (
           <p className="mt-8 flex items-center justify-center gap-2 text-sm text-muted-foreground">
