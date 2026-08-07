@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, Download, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Download, Plus, RefreshCcw, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
