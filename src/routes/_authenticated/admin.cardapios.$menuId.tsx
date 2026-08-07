@@ -23,6 +23,8 @@ function MenuDetail() {
   const products = useProducts(menuId);
   const categoryMutation = useTableMutation("categories", ["categories"]);
   const productMutation = useTableMutation("products", ["products"]);
+  const regenerate = useRegenerateMenuCode();
+
 
   const [categoryName, setCategoryName] = useState("");
   const [form, setForm] = useState({
