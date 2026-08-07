@@ -68,7 +68,7 @@ function ScannerPage() {
       setSession(data);
       toast.success(`Olá, ${data.name}`);
     },
-    onError: () => toast.error("Não foi possível validar o PIN"),
+    onError: (error: Error) => toast.error(error.message || "Não foi possível validar o PIN"),
   });
 
   const loadMutation = useMutation({
@@ -83,7 +83,7 @@ function ScannerPage() {
         Object.fromEntries(data.items.map((item) => [item.id, item.available_quantity > 0 ? item.available_quantity : 0])),
       );
     },
-    onError: () => toast.error("Falha ao consultar o voucher"),
+    onError: (error: Error) => toast.error(error.message || "Falha ao consultar o voucher"),
   });
 
   const pickupMutation = useMutation({
@@ -149,7 +149,9 @@ function ScannerPage() {
           <Button type="submit" className="mt-5 h-12 w-full" disabled={loginMutation.isPending}>
             {loginMutation.isPending ? "Validando…" : "Entrar"}
           </Button>
-          <p className="mt-4 text-center text-xs text-muted-foreground">Demonstração: PIN 1234</p>
+          <p className="mt-4 text-center text-xs text-muted-foreground">
+            Use o PIN cadastrado em Painel &gt; Equipe. Demonstração: 1234
+          </p>
         </form>
       </div>
     );
