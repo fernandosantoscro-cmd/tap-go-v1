@@ -65,6 +65,23 @@ function OrdersPage() {
     );
   }
 
+  function exportCsv() {
+    const rows: (string | number)[][] = [
+      ["Código", "Data", "Cliente", "Pagamento", "Status pagamento", "Status", "Total (R$)", "Itens"],
+      ...list.map((order) => [
+        order.code,
+        formatDateTime(order.created_at),
+        order.customer_name ?? "",
+        order.payment_method === "card" ? "Cartão" : "PIX",
+        order.payment_status,
+        ORDER_STATUS_LABEL[order.status] ?? order.status,
+        (order.total_cents / 100).toFixed(2).replace(".", ","),
+        order.order_items.map((item) => `${item.quantity}x ${item.product_name}`).join(" | "),
+      ]),
+    ];
+    downloadCsv(`tapgo-pedidos-${range.key}.csv`, toCsv(rows));
+  }
+
   return (
     <div className="space-y-6">
       <header className="flex flex-wrap items-end justify-between gap-4">
@@ -74,10 +91,17 @@ function OrdersPage() {
             Atualiza em tempo real. Marque como <strong>Pronto</strong> para liberar a retirada no balcão.
           </p>
         </div>
-        <Button variant="outline" size="sm" onClick={() => void orders.refetch()}>
-          <RefreshCcw className="mr-2 size-4" /> Atualizar
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={exportCsv} disabled={list.length === 0}>
+            <Download className="mr-2 size-4" /> Exportar CSV
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => void orders.refetch()}>
+            <RefreshCcw className="mr-2 size-4" /> Atualizar
+          </Button>
+        </div>
       </header>
+
+      <DateRangeFilter value={range} onChange={setRange} custom={custom} onCustomChange={setCustom} />
 
       <div className="flex flex-wrap gap-2">
         {FILTERS.map((item) => (
@@ -96,6 +120,7 @@ function OrdersPage() {
         {list.map((order) => {
           const delivered = order.order_items.reduce((sum, item) => sum + item.delivered_quantity, 0);
           const total = order.order_items.reduce((sum, item) => sum + item.quantity, 0);
+
           return (
             <article key={order.id} className="rounded-2xl border bg-background p-5">
               <div className="flex flex-wrap items-start justify-between gap-3">
