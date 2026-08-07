@@ -62,6 +62,31 @@ function VoucherPage() {
   const complete = deliveredItems >= totalItems;
   const voucherUrl =
     typeof window === "undefined" ? `/voucher/${code}` : `${window.location.origin}/voucher/${code}`;
+  const [busy, setBusy] = useState<"share" | "download" | null>(null);
+
+  async function handleReceipt(action: "share" | "download") {
+    setBusy(action);
+    try {
+      if (action === "download") {
+        await downloadReceipt(voucher);
+        toast.success("Comprovante baixado");
+      } else {
+        const result = await shareReceipt(voucher);
+        toast.success(
+          result === "shared"
+            ? "Comprovante compartilhado"
+            : result === "copied"
+              ? "Link do comprovante copiado"
+              : "Comprovante baixado",
+        );
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Não foi possível gerar o comprovante");
+    } finally {
+      setBusy(null);
+    }
+  }
+
 
   return (
     <div className="min-h-screen bg-background pb-16">
