@@ -28,7 +28,7 @@ Plataforma que elimina a fila de pagamento: o cliente escaneia o QR do balcão, 
 - **Produtos:** nome, imagem, descrição, preço, categoria, tempo de preparo, disponibilidade, estoque opcional.
 - **Pedidos:** lista em tempo real, filtro por status, alteração manual Recebido → Preparando → Pronto → Entregue.
 - **Retiradas:** histórico de entregas parciais (o quê, quanto, quando, por qual balcão).
-- **Scanner (tela dedicada, pensada para tablet):** câmera sempre aberta + digitação manual do código. Ao ler, abre o pedido, lista saldo disponível por produto, seletor grande [-] N [+] e "Confirmar entrega". Saldo zerado mostra "Produto totalmente retirado"; QR segue válido enquanto houver pendência.
+- **Scanner (funcional de verdade, desktop e tablet):** abre a webcam do computador (permissão do navegador), mostra o vídeo ao vivo com moldura de mira e lê o QR Code do voucher que você apontar — inclusive o QR aberto na tela do celular. Feedback imediato (som + destaque) ao reconhecer. Botão para trocar de câmera e alternativa de digitação manual do código caso não haja câmera. Ao ler, abre o pedido real, lista saldo disponível por produto, seletor grande [-] N [+] e "Confirmar entrega". Após confirmar, o saldo cai no banco e o voucher no celular atualiza na hora. Saldo zerado mostra "Produto totalmente retirado"; QR segue válido enquanto houver pendência. Todo o ciclo — escanear, entregar parcialmente, escanear de novo, zerar — funciona ponta a ponta com dados reais, só o pagamento é simulado.
 - **Funcionários:** nome, cargo, PIN de acesso, permissões por cargo.
 - **Relatórios:** vendas por evento/cardápio/produto, exportação CSV.
 - **Configurações:** dados do estabelecimento, métodos de pagamento ativos.
