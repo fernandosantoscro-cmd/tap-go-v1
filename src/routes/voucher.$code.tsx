@@ -1,13 +1,18 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, notFound } from "@tanstack/react-router";
-import { CheckCircle2, Clock, PartyPopper } from "lucide-react";
+import { CheckCircle2, Clock, Download, PartyPopper, Share2 } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 
 import { QrCode } from "@/components/qr-code";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { formatBRL, ORDER_STATUS_LABEL } from "@/lib/format";
+import { downloadReceipt, shareReceipt } from "@/lib/receipt";
 import { fetchVoucher } from "@/lib/tapgo.functions";
 import type { VoucherPayload } from "@/lib/tapgo-types";
+
 
 export const Route = createFileRoute("/voucher/$code")({
   loader: async ({ params }) => {
