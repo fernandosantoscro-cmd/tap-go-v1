@@ -49,7 +49,10 @@ export function useEstablishment() {
   return useQuery({
     queryKey: ["establishment"],
     staleTime: 60_000,
+    retry: 2,
+    retryDelay: 800,
     queryFn: async (): Promise<Establishment> => {
+
       const pending = readPendingSignup();
       const args: { p_name?: string; p_document?: string; p_type?: string; p_phone?: string } = {};
       if (pending?.name) args.p_name = pending.name;
