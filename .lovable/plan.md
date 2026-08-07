@@ -1,45 +1,41 @@
-# Scanner por conta e estabelecimento (multi-bar)
+# Scanner sem PIN para o dono logado
 
 ## O que está acontecendo
 
 Confirmei no banco: existem contas de proprietário diferentes, cada uma com seu próprio
-estabelecimento e PIN de balcão (Bar do Ché, Meu estabelecimento, Bar do Zé e Arena Live
-Club). O `/scanner`, porém, guarda no navegador o PIN do último bar utilizado, independente
-da conta administrativa atualmente conectada. Ao sair de uma conta, entrar em outra e testar
-o novo bar no mesmo computador, o scanner continua representando o bar anterior — daí
+estabelecimento (Bar do Ché, Meu estabelecimento, Bar do Zé, Arena Live Club). O `/scanner`
+hoje exige PIN de funcionário e guarda esse PIN no navegador. Ao criar uma conta nova e testar
+o bar dela no mesmo computador, o scanner continua representando o bar anterior — daí
 "Este voucher pertence a outro estabelecimento".
 
-A validação está correta (um balcão não pode dar baixa em voucher de outro bar). O que
-falta é deixar claro **qual balcão está aberto** e trocar de balcão em 1 clique.
+Você está certo: para quem já está logado como dono, o PIN não agrega nada — a conta já
+identifica o estabelecimento.
 
 ## O que vou fazer
 
-1. **Mostrar o balcão ativo no scanner**: cabeçalho com o nome do estabelecimento do PIN
-   logado, sempre visível, e botão "Trocar balcão" que limpa a sessão e volta à tela de PIN.
-2. **Erro de estabelecimento diferente vira ação**: quando o voucher for de outro bar, em vez
-   de só avisar, mostro um aviso com o nome do balcão atual e um botão "Trocar de balcão"
-   que já leva para a digitação do PIN, mantendo o código lido para reprocessar automaticamente
-   depois do novo login.
-3. **Sincronizar com a troca de conta**: ao sair da conta administrativa ou entrar em outra
-   conta no mesmo navegador, limpar a sessão local do scanner anterior. Nenhum PIN de outro
-   estabelecimento será herdado pela nova conta.
-4. **Atalho seguro no painel**: em Painel > Equipe (e no editor de cardápio), um botão
-   "Abrir scanner deste bar" abre o scanner e solicita/confirma o PIN daquele estabelecimento,
-   sem expor o PIN na URL.
-5. **Sessão inválida se autolimpa**: se o PIN salvo não existir mais (bar apagado, PIN
-   regenerado), o scanner detecta na abertura e volta para a tela de PIN em vez de falhar depois.
+1. **Scanner dentro do painel, sem PIN**: nova tela em Painel > Retirada
+   (`/admin/retirada`). Ela usa a conta logada para saber qual é o bar, abre a câmera e lê o
+   voucher direto — nada de digitar código de acesso. Ao trocar de conta, o bar do scanner
+   troca junto, automaticamente.
+2. **Retirada total ou parcial** na mesma tela: lista dos itens com saldo, ajuste de
+   quantidade e botão "Registrar retirada", com o voucher atualizando na hora.
+3. **Voucher de outro bar** mostra um aviso claro ("este voucher é do bar X") em vez de erro
+   de tela, e o scanner segue pronto para o próximo QR.
+4. **`/scanner` com PIN continua existindo** para funcionário de balcão que não tem login
+   (tablet do bar), agora com o nome do bar no topo e botão "Trocar balcão". No painel, o
+   atalho "Abrir retirada" leva para a versão sem PIN.
+5. **Atalho visível**: link para a tela de retirada no menu do painel e no editor de cardápio.
 
-Resultado: o QR de cada cardápio/voucher funciona no scanner do bar correspondente, e trocar
-entre os bares de teste é imediato.
+Resultado: para testar vários bares você só troca de conta e usa Painel > Retirada — cada
+cardápio/voucher funciona no seu próprio bar, sem PIN.
 
 ## Detalhes técnicos
 
-- `src/routes/scanner.tsx`: header com `session.establishment`, botão de logout de balcão,
-  estado `pendingCode` para reler após troca de PIN, validação da sessão salva ao montar
-  (chamada a `staffLogin` com o PIN salvo).
-- O armazenamento do scanner passa a incluir a identidade do estabelecimento e é invalidado
-  quando a conta autenticada muda ou encerra a sessão.
-- `src/routes/_authenticated/admin.equipe.tsx` e `admin.cardapios.$menuId.tsx`: ação
-  "Abrir scanner deste bar" sem transportar credenciais na URL.
-- Sem mudança de schema nem de RLS; `staff_get_order` continua bloqueando vouchers de
-  outros estabelecimentos.
+- Nova função de servidor autenticada (middleware de autenticação) que busca o voucher e
+  registra a retirada validando que o pedido pertence ao estabelecimento do usuário logado —
+  mesma regra de isolamento de hoje, só sem PIN.
+- Nova rota `src/routes/_authenticated/admin.retirada.tsx` reutilizando `QrScanner` e o layout
+  de itens já existente no `/scanner`.
+- `src/routes/scanner.tsx`: header com o bar ativo, botão de troca de balcão e limpeza da
+  sessão local quando o PIN salvo não for mais válido.
+- Sem alteração de RLS; as funções existentes de PIN permanecem para o fluxo de balcão.
