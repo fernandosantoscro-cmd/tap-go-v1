@@ -731,6 +731,7 @@ export type Database = {
         Returns: Json
       }
       gen_public_code: { Args: { p_len?: number }; Returns: string }
+      gen_unique_staff_pin: { Args: never; Returns: string }
       get_menu_by_code: { Args: { p_code: string }; Returns: Json }
       get_voucher: { Args: { p_code: string }; Returns: Json }
       owner_set_order_status: {
