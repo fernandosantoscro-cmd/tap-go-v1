@@ -68,15 +68,16 @@ export const staffGetOrder = createServerFn({ method: "POST" })
     pin: String(data.pin).slice(0, 12),
     code: String(data.code).slice(0, 32),
   }))
-  .handler(async ({ data }): Promise<VoucherPayload | null> => {
+  .handler(async ({ data }): Promise<{ voucher: VoucherPayload | null; error: string | null }> => {
     const { publicDb } = await import("./public-db.server");
     const { data: result, error } = await publicDb().rpc("staff_get_order", {
       p_pin: data.pin,
       p_order_code: data.code,
     });
-    if (error) throw new Error(error.message);
-    return (result as VoucherPayload | null) ?? null;
+    if (error) return { voucher: null, error: error.message };
+    return { voucher: (result as VoucherPayload | null) ?? null, error: null };
   });
+
 
 export const registerPickup = createServerFn({ method: "POST" })
   .inputValidator((data: { pin: string; code: string; items: { item_id: string; quantity: number }[] }) => ({
