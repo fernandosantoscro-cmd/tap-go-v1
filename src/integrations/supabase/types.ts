@@ -726,9 +726,17 @@ export type Database = {
         }
         Returns: Json
       }
+      ensure_my_establishment: {
+        Args: { p_document?: string; p_name?: string }
+        Returns: Json
+      }
       gen_public_code: { Args: { p_len?: number }; Returns: string }
       get_menu_by_code: { Args: { p_code: string }; Returns: Json }
       get_voucher: { Args: { p_code: string }; Returns: Json }
+      owner_set_order_status: {
+        Args: { p_item_id?: string; p_order_id: string; p_status: string }
+        Returns: Json
+      }
       owns_establishment: { Args: { p_id: string }; Returns: boolean }
       register_pickup: {
         Args: { p_items: Json; p_order_code: string; p_pin: string }

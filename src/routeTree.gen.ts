@@ -10,20 +10,44 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ScannerRouteImport } from './routes/scanner'
+import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as MenuCodeRouteImport } from './routes/menu.$code'
 import { Route as PagamentoCodeRouteImport } from './routes/pagamento.$code'
 import { Route as VoucherCodeRouteImport } from './routes/voucher.$code'
+import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
+import { Route as AuthenticatedAdminEquipeRouteImport } from './routes/_authenticated/admin.equipe'
+import { Route as AuthenticatedAdminEventosRouteImport } from './routes/_authenticated/admin.eventos'
+import { Route as AuthenticatedAdminPedidosRouteImport } from './routes/_authenticated/admin.pedidos'
+import { Route as AuthenticatedAdminRelatoriosRouteImport } from './routes/_authenticated/admin.relatorios'
+import { Route as AuthenticatedAdminCardapiosIndexRouteImport } from './routes/_authenticated/admin.cardapios.index'
+import { Route as AuthenticatedAdminCardapiosMenuIdRouteImport } from './routes/_authenticated/admin.cardapios.$menuId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ScannerRoute = ScannerRouteImport.update({
   id: '/scanner',
   path: '/scanner',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const MenuCodeRoute = MenuCodeRouteImport.update({
   id: '/menu/$code',
@@ -40,46 +64,152 @@ const VoucherCodeRoute = VoucherCodeRouteImport.update({
   path: '/voucher/$code',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
+const AuthenticatedAdminEquipeRoute =
+  AuthenticatedAdminEquipeRouteImport.update({
+    id: '/equipe',
+    path: '/equipe',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminEventosRoute =
+  AuthenticatedAdminEventosRouteImport.update({
+    id: '/eventos',
+    path: '/eventos',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminPedidosRoute =
+  AuthenticatedAdminPedidosRouteImport.update({
+    id: '/pedidos',
+    path: '/pedidos',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminRelatoriosRoute =
+  AuthenticatedAdminRelatoriosRouteImport.update({
+    id: '/relatorios',
+    path: '/relatorios',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminCardapiosIndexRoute =
+  AuthenticatedAdminCardapiosIndexRouteImport.update({
+    id: '/cardapios/',
+    path: '/cardapios/',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminCardapiosMenuIdRoute =
+  AuthenticatedAdminCardapiosMenuIdRouteImport.update({
+    id: '/cardapios/$menuId',
+    path: '/cardapios/$menuId',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
   '/scanner': typeof ScannerRoute
+  '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/menu/$code': typeof MenuCodeRoute
   '/pagamento/$code': typeof PagamentoCodeRoute
   '/voucher/$code': typeof VoucherCodeRoute
+  '/admin/equipe': typeof AuthenticatedAdminEquipeRoute
+  '/admin/eventos': typeof AuthenticatedAdminEventosRoute
+  '/admin/pedidos': typeof AuthenticatedAdminPedidosRoute
+  '/admin/relatorios': typeof AuthenticatedAdminRelatoriosRoute
+  '/admin/': typeof AuthenticatedAdminIndexRoute
+  '/admin/cardapios/$menuId': typeof AuthenticatedAdminCardapiosMenuIdRoute
+  '/admin/cardapios/': typeof AuthenticatedAdminCardapiosIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
   '/scanner': typeof ScannerRoute
   '/menu/$code': typeof MenuCodeRoute
   '/pagamento/$code': typeof PagamentoCodeRoute
   '/voucher/$code': typeof VoucherCodeRoute
+  '/admin/equipe': typeof AuthenticatedAdminEquipeRoute
+  '/admin/eventos': typeof AuthenticatedAdminEventosRoute
+  '/admin/pedidos': typeof AuthenticatedAdminPedidosRoute
+  '/admin/relatorios': typeof AuthenticatedAdminRelatoriosRoute
+  '/admin': typeof AuthenticatedAdminIndexRoute
+  '/admin/cardapios/$menuId': typeof AuthenticatedAdminCardapiosMenuIdRoute
+  '/admin/cardapios': typeof AuthenticatedAdminCardapiosIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/auth': typeof AuthRoute
   '/scanner': typeof ScannerRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/menu/$code': typeof MenuCodeRoute
   '/pagamento/$code': typeof PagamentoCodeRoute
   '/voucher/$code': typeof VoucherCodeRoute
+  '/_authenticated/admin/equipe': typeof AuthenticatedAdminEquipeRoute
+  '/_authenticated/admin/eventos': typeof AuthenticatedAdminEventosRoute
+  '/_authenticated/admin/pedidos': typeof AuthenticatedAdminPedidosRoute
+  '/_authenticated/admin/relatorios': typeof AuthenticatedAdminRelatoriosRoute
+  '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
+  '/_authenticated/admin/cardapios/$menuId': typeof AuthenticatedAdminCardapiosMenuIdRoute
+  '/_authenticated/admin/cardapios/': typeof AuthenticatedAdminCardapiosIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/scanner' | '/menu/$code' | '/pagamento/$code' | '/voucher/$code'
-  fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/scanner' | '/menu/$code' | '/pagamento/$code' | '/voucher/$code'
-  id:
-    | '__root__'
     | '/'
+    | '/auth'
+    | '/scanner'
+    | '/admin'
+    | '/menu/$code'
+    | '/pagamento/$code'
+    | '/voucher/$code'
+    | '/admin/equipe'
+    | '/admin/eventos'
+    | '/admin/pedidos'
+    | '/admin/relatorios'
+    | '/admin/'
+    | '/admin/cardapios/$menuId'
+    | '/admin/cardapios/'
+  fileRoutesByTo: FileRoutesByTo
+  to:
+    | '/'
+    | '/auth'
     | '/scanner'
     | '/menu/$code'
     | '/pagamento/$code'
     | '/voucher/$code'
+    | '/admin/equipe'
+    | '/admin/eventos'
+    | '/admin/pedidos'
+    | '/admin/relatorios'
+    | '/admin'
+    | '/admin/cardapios/$menuId'
+    | '/admin/cardapios'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/auth'
+    | '/scanner'
+    | '/_authenticated/admin'
+    | '/menu/$code'
+    | '/pagamento/$code'
+    | '/voucher/$code'
+    | '/_authenticated/admin/equipe'
+    | '/_authenticated/admin/eventos'
+    | '/_authenticated/admin/pedidos'
+    | '/_authenticated/admin/relatorios'
+    | '/_authenticated/admin/'
+    | '/_authenticated/admin/cardapios/$menuId'
+    | '/_authenticated/admin/cardapios/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AuthRoute: typeof AuthRoute
   ScannerRoute: typeof ScannerRoute
   MenuCodeRoute: typeof MenuCodeRoute
   PagamentoCodeRoute: typeof PagamentoCodeRoute
@@ -95,12 +225,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/scanner': {
       id: '/scanner'
       path: '/scanner'
       fullPath: '/scanner'
       preLoaderRoute: typeof ScannerRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/menu/$code': {
       id: '/menu/$code'
@@ -123,11 +274,97 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof VoucherCodeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/admin/': {
+      id: '/_authenticated/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/equipe': {
+      id: '/_authenticated/admin/equipe'
+      path: '/equipe'
+      fullPath: '/admin/equipe'
+      preLoaderRoute: typeof AuthenticatedAdminEquipeRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/eventos': {
+      id: '/_authenticated/admin/eventos'
+      path: '/eventos'
+      fullPath: '/admin/eventos'
+      preLoaderRoute: typeof AuthenticatedAdminEventosRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/pedidos': {
+      id: '/_authenticated/admin/pedidos'
+      path: '/pedidos'
+      fullPath: '/admin/pedidos'
+      preLoaderRoute: typeof AuthenticatedAdminPedidosRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/relatorios': {
+      id: '/_authenticated/admin/relatorios'
+      path: '/relatorios'
+      fullPath: '/admin/relatorios'
+      preLoaderRoute: typeof AuthenticatedAdminRelatoriosRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/cardapios/': {
+      id: '/_authenticated/admin/cardapios/'
+      path: '/cardapios'
+      fullPath: '/admin/cardapios/'
+      preLoaderRoute: typeof AuthenticatedAdminCardapiosIndexRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/cardapios/$menuId': {
+      id: '/_authenticated/admin/cardapios/$menuId'
+      path: '/cardapios/$menuId'
+      fullPath: '/admin/cardapios/$menuId'
+      preLoaderRoute: typeof AuthenticatedAdminCardapiosMenuIdRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
   }
 }
 
+interface AuthenticatedAdminRouteChildren {
+  AuthenticatedAdminEquipeRoute: typeof AuthenticatedAdminEquipeRoute
+  AuthenticatedAdminEventosRoute: typeof AuthenticatedAdminEventosRoute
+  AuthenticatedAdminPedidosRoute: typeof AuthenticatedAdminPedidosRoute
+  AuthenticatedAdminRelatoriosRoute: typeof AuthenticatedAdminRelatoriosRoute
+  AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
+  AuthenticatedAdminCardapiosMenuIdRoute: typeof AuthenticatedAdminCardapiosMenuIdRoute
+  AuthenticatedAdminCardapiosIndexRoute: typeof AuthenticatedAdminCardapiosIndexRoute
+}
+
+const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
+  AuthenticatedAdminEquipeRoute: AuthenticatedAdminEquipeRoute,
+  AuthenticatedAdminEventosRoute: AuthenticatedAdminEventosRoute,
+  AuthenticatedAdminPedidosRoute: AuthenticatedAdminPedidosRoute,
+  AuthenticatedAdminRelatoriosRoute: AuthenticatedAdminRelatoriosRoute,
+  AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
+  AuthenticatedAdminCardapiosMenuIdRoute:
+    AuthenticatedAdminCardapiosMenuIdRoute,
+  AuthenticatedAdminCardapiosIndexRoute: AuthenticatedAdminCardapiosIndexRoute,
+}
+
+const AuthenticatedAdminRouteWithChildren =
+  AuthenticatedAdminRoute._addFileChildren(AuthenticatedAdminRouteChildren)
+
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthRoute: AuthRoute,
   ScannerRoute: ScannerRoute,
   MenuCodeRoute: MenuCodeRoute,
   PagamentoCodeRoute: PagamentoCodeRoute,
@@ -136,13 +373,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
