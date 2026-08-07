@@ -23,6 +23,7 @@ import { Route as AuthenticatedAdminEquipeRouteImport } from './routes/_authenti
 import { Route as AuthenticatedAdminEventosRouteImport } from './routes/_authenticated/admin.eventos'
 import { Route as AuthenticatedAdminPedidosRouteImport } from './routes/_authenticated/admin.pedidos'
 import { Route as AuthenticatedAdminRelatoriosRouteImport } from './routes/_authenticated/admin.relatorios'
+import { Route as AuthenticatedAdminRetiradaRouteImport } from './routes/_authenticated/admin.retirada'
 import { Route as AuthenticatedAdminCardapiosIndexRouteImport } from './routes/_authenticated/admin.cardapios.index'
 import { Route as AuthenticatedAdminCardapiosMenuIdRouteImport } from './routes/_authenticated/admin.cardapios.$menuId'
 
@@ -100,6 +101,12 @@ const AuthenticatedAdminRelatoriosRoute =
     path: '/relatorios',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminRetiradaRoute =
+  AuthenticatedAdminRetiradaRouteImport.update({
+    id: '/retirada',
+    path: '/retirada',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminCardapiosIndexRoute =
   AuthenticatedAdminCardapiosIndexRouteImport.update({
     id: '/cardapios/',
@@ -126,6 +133,7 @@ export interface FileRoutesByFullPath {
   '/admin/eventos': typeof AuthenticatedAdminEventosRoute
   '/admin/pedidos': typeof AuthenticatedAdminPedidosRoute
   '/admin/relatorios': typeof AuthenticatedAdminRelatoriosRoute
+  '/admin/retirada': typeof AuthenticatedAdminRetiradaRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/admin/cardapios/$menuId': typeof AuthenticatedAdminCardapiosMenuIdRoute
   '/admin/cardapios/': typeof AuthenticatedAdminCardapiosIndexRoute
@@ -142,6 +150,7 @@ export interface FileRoutesByTo {
   '/admin/eventos': typeof AuthenticatedAdminEventosRoute
   '/admin/pedidos': typeof AuthenticatedAdminPedidosRoute
   '/admin/relatorios': typeof AuthenticatedAdminRelatoriosRoute
+  '/admin/retirada': typeof AuthenticatedAdminRetiradaRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/admin/cardapios/$menuId': typeof AuthenticatedAdminCardapiosMenuIdRoute
   '/admin/cardapios': typeof AuthenticatedAdminCardapiosIndexRoute
@@ -161,6 +170,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/eventos': typeof AuthenticatedAdminEventosRoute
   '/_authenticated/admin/pedidos': typeof AuthenticatedAdminPedidosRoute
   '/_authenticated/admin/relatorios': typeof AuthenticatedAdminRelatoriosRoute
+  '/_authenticated/admin/retirada': typeof AuthenticatedAdminRetiradaRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/admin/cardapios/$menuId': typeof AuthenticatedAdminCardapiosMenuIdRoute
   '/_authenticated/admin/cardapios/': typeof AuthenticatedAdminCardapiosIndexRoute
@@ -180,6 +190,7 @@ export interface FileRouteTypes {
     | '/admin/eventos'
     | '/admin/pedidos'
     | '/admin/relatorios'
+    | '/admin/retirada'
     | '/admin/'
     | '/admin/cardapios/$menuId'
     | '/admin/cardapios/'
@@ -196,6 +207,7 @@ export interface FileRouteTypes {
     | '/admin/eventos'
     | '/admin/pedidos'
     | '/admin/relatorios'
+    | '/admin/retirada'
     | '/admin'
     | '/admin/cardapios/$menuId'
     | '/admin/cardapios'
@@ -214,6 +226,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/eventos'
     | '/_authenticated/admin/pedidos'
     | '/_authenticated/admin/relatorios'
+    | '/_authenticated/admin/retirada'
     | '/_authenticated/admin/'
     | '/_authenticated/admin/cardapios/$menuId'
     | '/_authenticated/admin/cardapios/'
@@ -329,6 +342,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRelatoriosRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/retirada': {
+      id: '/_authenticated/admin/retirada'
+      path: '/retirada'
+      fullPath: '/admin/retirada'
+      preLoaderRoute: typeof AuthenticatedAdminRetiradaRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/cardapios/': {
       id: '/_authenticated/admin/cardapios/'
       path: '/cardapios'
@@ -352,6 +372,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminEventosRoute: typeof AuthenticatedAdminEventosRoute
   AuthenticatedAdminPedidosRoute: typeof AuthenticatedAdminPedidosRoute
   AuthenticatedAdminRelatoriosRoute: typeof AuthenticatedAdminRelatoriosRoute
+  AuthenticatedAdminRetiradaRoute: typeof AuthenticatedAdminRetiradaRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
   AuthenticatedAdminCardapiosMenuIdRoute: typeof AuthenticatedAdminCardapiosMenuIdRoute
   AuthenticatedAdminCardapiosIndexRoute: typeof AuthenticatedAdminCardapiosIndexRoute
@@ -363,6 +384,7 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminEventosRoute: AuthenticatedAdminEventosRoute,
   AuthenticatedAdminPedidosRoute: AuthenticatedAdminPedidosRoute,
   AuthenticatedAdminRelatoriosRoute: AuthenticatedAdminRelatoriosRoute,
+  AuthenticatedAdminRetiradaRoute: AuthenticatedAdminRetiradaRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
   AuthenticatedAdminCardapiosMenuIdRoute:
     AuthenticatedAdminCardapiosMenuIdRoute,
@@ -395,13 +417,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
