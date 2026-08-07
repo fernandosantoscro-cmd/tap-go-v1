@@ -65,12 +65,11 @@ function Landing() {
               </Link>
             </Button>
             <Button asChild size="lg" variant="outline" className="tap-target">
-              <Link to="/menu/$code" params={{ code: "bar01" }}>
-                Ver cardápio de demonstração
-              </Link>
+              <Link to="/scanner">Abrir scanner do balcão</Link>
             </Button>
           </div>
         </section>
+
 
         <section className="border-t bg-secondary/40">
           <div className="mx-auto grid max-w-6xl gap-10 px-6 py-20 md:grid-cols-3">
@@ -94,10 +93,9 @@ function Landing() {
                 pouca atenção.
               </p>
               <Button asChild variant="link" className="mt-4 px-0">
-                <Link to="/menu/$code" params={{ code: "bar01" }}>
-                  Abrir demonstração
-                </Link>
+                <Link to="/auth">Gerar o QR do meu cardápio</Link>
               </Button>
+
             </article>
             <article className="rounded-2xl border p-8">
               <h3 className="text-xl font-semibold">Painel do estabelecimento</h3>

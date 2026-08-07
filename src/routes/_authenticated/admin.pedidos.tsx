@@ -1,13 +1,15 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { CheckCircle2, ChefHat, PackageCheck, RefreshCcw } from "lucide-react";
+import { CheckCircle2, ChefHat, Download, PackageCheck, RefreshCcw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
+import { DateRangeFilter } from "@/components/date-range-filter";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useEstablishment, useOrders, useSetOrderStatus, type AdminOrder } from "@/lib/admin-db";
+import { buildRange, downloadCsv, toCsv, type DateRange } from "@/lib/date-range";
 import { formatBRL, formatDateTime, ORDER_STATUS_LABEL } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/admin/pedidos")({
@@ -23,10 +25,13 @@ const FILTERS = [
 
 function OrdersPage() {
   const establishment = useEstablishment();
-  const orders = useOrders(establishment.data?.id);
+  const [range, setRange] = useState<DateRange>(() => buildRange("hoje"));
+  const [custom, setCustom] = useState({ from: "", to: "" });
+  const orders = useOrders(establishment.data?.id, range);
   const setStatus = useSetOrderStatus();
   const queryClient = useQueryClient();
   const [filter, setFilter] = useState<(typeof FILTERS)[number]["key"]>("abertos");
+
 
   useEffect(() => {
     const channel = supabase

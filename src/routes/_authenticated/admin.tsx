@@ -8,7 +8,9 @@ import {
   QrCode,
   ReceiptText,
   ScanLine,
+  Settings,
   Users,
+
 } from "lucide-react";
 import { useEffect } from "react";
 
@@ -29,7 +31,9 @@ const nav = [
   { to: "/admin/cardapios", label: "Cardápios & QR", icon: QrCode },
   { to: "/admin/equipe", label: "Equipe & pagamentos", icon: Users },
   { to: "/admin/relatorios", label: "Relatórios", icon: BarChart3 },
+  { to: "/admin/configuracoes", label: "Configurações", icon: Settings },
 ] as const;
+
 
 function AdminLayout() {
   const navigate = useNavigate();
