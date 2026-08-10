@@ -25,15 +25,20 @@ export interface PickupConsoleProps {
   onRegister: (code: string, items: { item_id: string; quantity: number }[]) => Promise<PickupResult>;
   /** Marca um item da cozinha como pronto (opcional). */
   onMarkReady?: (code: string, itemId: string) => Promise<{ error: string | null }>;
+  /** Abre um pedido vindo da fila, sem escanear. */
+  openRequest?: { code: string; nonce: number } | null;
+  /** Avisa o pai quando a retirada muda o pedido (para atualizar a fila). */
+  onChanged?: () => void;
 }
 
 /** Console de leitura e retirada usado pelo dono (painel) e pelo funcionário (balcão). */
-export function PickupConsole({ onLookup, onRegister, onMarkReady }: PickupConsoleProps) {
+export function PickupConsole({ onLookup, onRegister, onMarkReady, openRequest, onChanged }: PickupConsoleProps) {
   const [voucher, setVoucher] = useState<VoucherPayload | null>(null);
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [manualCode, setManualCode] = useState("");
   const [feedback, setFeedback] = useState<ScanFeedback>(null);
   const [frame, setFrame] = useState<"idle" | "success" | "error">("idle");
+
 
   function applyVoucher(data: VoucherPayload) {
     setVoucher(data);
