@@ -379,6 +379,30 @@ export type Database = {
           },
         ]
       }
+      order_pings: {
+        Row: {
+          created_at: string
+          id: string
+          item_name: string | null
+          order_code: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          item_name?: string | null
+          order_code: string
+          status: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          item_name?: string | null
+          order_code?: string
+          status?: string
+        }
+        Relationships: []
+      }
       orders: {
         Row: {
           code: string
