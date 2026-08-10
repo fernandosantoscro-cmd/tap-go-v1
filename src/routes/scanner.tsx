@@ -260,10 +260,24 @@ function ScannerPage() {
       </header>
 
       <main className="mx-auto max-w-6xl px-5 py-8">
+        {embedded && (
+          <div className="mb-6 rounded-2xl border border-primary/40 bg-primary/10 p-4 text-sm">
+            <p className="font-medium">Abra este link direto no navegador do celular para usar a câmera</p>
+            <p className="mt-1 break-all text-muted-foreground">
+              {typeof window === "undefined" ? "/scanner" : window.location.href}
+            </p>
+          </div>
+        )}
+        {!isOwner && session && (
+          <p className="mb-2 text-xs uppercase tracking-widest text-muted-foreground">
+            Operando em {[session.station, session.event].filter(Boolean).join(" · ") || session.establishment}
+          </p>
+        )}
         <h1 className="text-xl font-semibold">Leitor de voucher</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           A câmera fica pausada enquanto um pedido está aberto. Cada voucher tem um código único.
         </p>
+
         <div className="mt-6 space-y-6">
           {isOwner ? (
             <>
