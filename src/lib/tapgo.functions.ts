@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 
-import type { MenuPayload, VoucherPayload, StaffSession, CartLine } from "./tapgo-types";
+import type { MenuPayload, VoucherPayload, StaffSession, CartLine, OpenOrder } from "./tapgo-types";
 
 export const fetchMenu = createServerFn({ method: "GET" })
   .inputValidator((data: { code: string }) => ({ code: String(data.code).slice(0, 32) }))
@@ -133,4 +133,14 @@ export const staffSetItemStatus = createServerFn({ method: "POST" })
       p_item_id: data.itemId,
     });
     return { error: error ? error.message : null };
+  });
+
+/** Lista os pedidos pagos com itens pendentes do balcão vinculado ao PIN. */
+export const staffListOpenOrders = createServerFn({ method: "POST" })
+  .inputValidator((data: { pin: string }) => ({ pin: String(data.pin).slice(0, 12) }))
+  .handler(async ({ data }): Promise<OpenOrder[]> => {
+    const { publicDb } = await import("./public-db.server");
+    const { data: result, error } = await publicDb().rpc("staff_open_orders", { p_pin: data.pin });
+    if (error) throw new Error(error.message);
+    return (result as OpenOrder[] | null) ?? [];
   });
