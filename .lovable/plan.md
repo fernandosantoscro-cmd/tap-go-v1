@@ -37,14 +37,22 @@ Em Equipe, cada pessoa ganha link pronto de acesso (scanner com PIN preenchido),
 - Cabeçalho com bar + estande + pessoa e botão "Trocar balcão".
 - Login/logout do dono descarta qualquer sessão de PIN antiga no aparelho.
 
-**6. Relatórios por estande**
-Retiradas passam a registrar o estande, então Relatórios ganha o corte "por estande/evento" além do já existente por data.
+**6. Feedback visual de leitura**
+Ao ler um QR válido: bip curto, vibração (celular), moldura da câmera fica verde e um selo de check aparece com animação (`animate-scale-in` + `animate-fade-in`). Ao confirmar a retirada: overlay de sucesso em tela cheia com check animado, código do pedido e itens entregues, sumindo em ~1,5s. QR inválido/de outro bar: moldura vermelha e mensagem clara, sem travar a câmera.
+
+**7. Um QR único e funcional por estande**
+- Cada estande tem seu próprio cardápio com código público único (já é assim: `menus.code` gerado aleatoriamente) — então cada QR abre só o cardápio daquele estande e os pedidos nascem amarrados a ele.
+- Tela "QR Codes" com todos os estandes juntos: QR grande de cada um, código legível, botão de baixar PNG individual, baixar todos e imprimir a folha (um por página, pronto para colar na mesa/balcão).
+- Botão "criar estande" que já gera evento + cardápio + código + PIN do balcão, para você montar 2-3 estandes e testar um por um.
+- Cada voucher de cliente continua com código único (`orders.code`), então cada compra gera um QR diferente e rastreável.
 
 ## Detalhes técnicos
 
-- Migração: `staff.event_id uuid null references events(id)` e `staff.station text null` (ou tabela `stations` se preferir cadastro próprio — proponho `station` como texto no MVP para não inflar o cadastro); `staff_login` passa a retornar `event_id`/`station`; `register_pickup` grava `station` em `pickups`.
-- `src/components/pickup-console.tsx` (novo): extrai a UI de `admin.retirada.tsx` e recebe por props as funções de servidor (dono: `owner*`; funcionário: `staff*` com PIN) — lógica de grupos única em `voucher-groups.ts`.
-- `src/routes/scanner.tsx`: `supabase.auth.getUser()` (client-only) decide modo dono x PIN; revalida PIN salvo via `staffLogin` no mount; lê `?pin=` validado e limpa o parâmetro da URL; limpa `tapgo.staff.*` quando o estabelecimento da sessão mudar.
+- Migração: `staff.event_id uuid null references events(id)` e `staff.station text null`; `staff_login` retorna `event_id`/`station`; `register_pickup` grava `station`/`menu_id` em `pickups`.
+- `src/components/pickup-console.tsx` (novo): extrai a UI de `admin.retirada.tsx`, recebendo por props as funções de servidor (dono: `owner*`; funcionário: `staff*` com PIN) — grupos continuam em `voucher-groups.ts`.
+- `src/components/scan-feedback.tsx` (novo): overlay de sucesso/erro (Web Audio para o bip, `navigator.vibrate`, `prefers-reduced-motion` respeitado); `qr-scanner.tsx` ganha prop `feedback` para a cor da moldura.
+- `src/routes/scanner.tsx`: `supabase.auth.getUser()` (client-only) decide modo dono x PIN; revalida o PIN salvo via `staffLogin` no mount; lê `?pin=` validado e limpa o parâmetro da URL; descarta `tapgo.staff.*` quando o estabelecimento muda.
 - `src/lib/tapgo.functions.ts`: mantém `{ voucher, error }`; adiciona `staffSetItemStatus` sobre a RPC `staff_set_status`.
-- `admin.equipe.tsx`: seleção de evento/estande no cadastro, link + `<QrCode>` por funcionário; `admin.relatorios.tsx`: agrupamento por estande.
-- `admin.retirada.tsx` passa a renderizar `PickupConsole` em modo dono.
+- `admin.equipe.tsx`: evento/estande no cadastro + link e `<QrCode>` por funcionário; nova rota `admin.qrcodes.tsx` com a folha de QR Codes (usa `QrCode` + download via canvas, como em `receipt.ts`); `admin.relatorios.tsx` agrupa por estande.
+- `admin.retirada.tsx` renderiza `PickupConsole` em modo dono.
+
