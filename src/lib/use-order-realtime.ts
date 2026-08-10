@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { supabase } from "@/integrations/supabase/client";
 
-type Ping = { item_name: string | null; status: string };
+type Ping = { id: string; item_name: string | null; status: string; created_at: string };
 
 const LABEL: Record<string, string> = {
   preparando: "entrou em preparo",
@@ -11,8 +11,9 @@ const LABEL: Record<string, string> = {
 };
 
 /**
- * Escuta em tempo real as mudanças de status dos itens do pedido e avisa o
- * cliente com notificação do sistema + vibração, sem depender do polling.
+ * Acompanha as mudanças de status dos itens do pedido consultando a função
+ * segura `get_order_pings`, que só devolve avisos de quem já conhece o código
+ * exato do pedido, e avisa o cliente com notificação do sistema + vibração.
  */
 export function useOrderRealtime(code: string, onChange: () => void) {
   const onChangeRef = useRef(onChange);
@@ -33,42 +34,44 @@ export function useOrderRealtime(code: string, onChange: () => void) {
 
   useEffect(() => {
     if (!code) return;
-    const channel = supabase
-      .channel(`order-pings-${code.toLowerCase()}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "order_pings",
-          filter: `order_code=eq.${code.toLowerCase()}`,
-        },
-        (payload) => {
-          const ping = payload.new as Ping;
-          onChangeRef.current();
+    let cancelled = false;
+    let since = new Date().toISOString();
 
-          if (typeof navigator !== "undefined" && "vibrate" in navigator) {
-            navigator.vibrate?.(ping.status === "pronto" ? [120, 60, 120] : 80);
-          }
+    const notify = (ping: Ping) => {
+      onChangeRef.current();
 
-          if (
-            typeof window !== "undefined" &&
-            "Notification" in window &&
-            Notification.permission === "granted"
-          ) {
-            const what = ping.item_name ?? "Seu item";
-            const how = LABEL[ping.status] ?? "mudou de status";
-            new Notification(ping.status === "pronto" ? "Pronto para retirar 🎉" : "Atualização do pedido", {
-              body: `${what} ${how}.`,
-              tag: `order-${code}-${ping.status}`,
-            });
-          }
-        },
-      )
-      .subscribe();
+      if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+        navigator.vibrate?.(ping.status === "pronto" ? [120, 60, 120] : 80);
+      }
 
+      if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
+        const what = ping.item_name ?? "Seu item";
+        const how = LABEL[ping.status] ?? "mudou de status";
+        new Notification(ping.status === "pronto" ? "Pronto para retirar 🎉" : "Atualização do pedido", {
+          body: `${what} ${how}.`,
+          tag: `order-${code}-${ping.status}`,
+        });
+      }
+    };
+
+    const poll = async () => {
+      const { data, error } = await supabase.rpc("get_order_pings", {
+        p_code: code.toLowerCase(),
+        p_since: since,
+      });
+      if (cancelled || error) return;
+
+      const pings = (data ?? []) as unknown as Ping[];
+      if (pings.length === 0) return;
+
+      since = pings[pings.length - 1]!.created_at;
+      for (const ping of pings) notify(ping);
+    };
+
+    const timer = setInterval(() => void poll(), 3000);
     return () => {
-      void supabase.removeChannel(channel);
+      cancelled = true;
+      clearInterval(timer);
     };
   }, [code]);
 
