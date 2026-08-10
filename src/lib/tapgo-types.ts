@@ -87,7 +87,12 @@ export interface StaffSession {
   name: string;
   role: "administrador" | "atendente" | "cozinha" | "bartender" | "scanner";
   establishment: string;
+  establishment_id?: string | null;
+  station?: string | null;
+  event_id?: string | null;
+  event?: string | null;
 }
+
 
 export interface CartLine {
   product_id: string;

@@ -9,7 +9,10 @@ interface QrScannerProps {
   onDetected: (value: string) => void;
   paused?: boolean;
   className?: string;
+  /** Cor da moldura: feedback imediato da última leitura. */
+  frame?: "idle" | "success" | "error";
 }
+
 
 type BarcodeDetectorLike = {
   detect: (source: CanvasImageSource) => Promise<{ rawValue: string }[]>;
@@ -19,7 +22,7 @@ type BarcodeDetectorLike = {
  * Leitor de QR Code por câmera (webcam do computador ou câmera do tablet).
  * Usa BarcodeDetector nativo quando disponível e cai para jsQR em canvas.
  */
-export function QrScanner({ onDetected, paused = false, className }: QrScannerProps) {
+export function QrScanner({ onDetected, paused = false, className, frame = "idle" }: QrScannerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const detectorRef = useRef<BarcodeDetectorLike | null>(null);
@@ -155,10 +158,17 @@ export function QrScanner({ onDetected, paused = false, className }: QrScannerPr
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
           <div
             className={cn(
-              "size-52 rounded-2xl border-4 transition-colors",
-              paused ? "border-success" : "border-primary",
+              "size-52 rounded-2xl border-4 transition-colors duration-300",
+              frame === "success"
+                ? "border-success animate-scale-in"
+                : frame === "error"
+                  ? "border-destructive animate-scale-in"
+                  : paused
+                    ? "border-success"
+                    : "border-primary",
             )}
           />
+
         </div>
         {status !== "live" && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-ink px-6 text-center text-ink-foreground">

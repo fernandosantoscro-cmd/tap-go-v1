@@ -1,24 +1,27 @@
 import { useMutation } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { CheckCircle2, LogOut, Minus, Plus, RotateCcw, ScanLine } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { LogOut, ScanLine, ShieldCheck } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
-import { extractOrderCode, QrScanner } from "@/components/qr-scanner";
-import { Badge } from "@/components/ui/badge";
+import { PickupConsole } from "@/components/pickup-console";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
-import { formatBRL, ORDER_STATUS_LABEL, STAFF_ROLE_LABEL } from "@/lib/format";
-import { registerPickup, staffGetOrder, staffLogin } from "@/lib/tapgo.functions";
-import type { StaffSession, VoucherPayload } from "@/lib/tapgo-types";
+import { supabase } from "@/integrations/supabase/client";
+import { STAFF_ROLE_LABEL } from "@/lib/format";
+import { ownerFetchVoucher, ownerRegisterPickup, ownerSetItemStatusByCode } from "@/lib/owner-pickup.functions";
+import { registerPickup, staffGetOrder, staffLogin, staffSetItemStatus } from "@/lib/tapgo.functions";
+import type { StaffSession } from "@/lib/tapgo-types";
 
 const PIN_KEY = "tapgo.staff.pin";
 const SESSION_KEY = "tapgo.staff.session";
 
 export const Route = createFileRoute("/scanner")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    pin: typeof search["pin"] === "string" ? search["pin"].replace(/\D/g, "").slice(0, 6) : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Scanner do balcão — TapGo" },
@@ -34,97 +37,119 @@ export const Route = createFileRoute("/scanner")({
   component: ScannerPage,
 });
 
-function ScannerPage() {
-  const login = useServerFn(staffLogin);
-  const lookup = useServerFn(staffGetOrder);
-  const pickup = useServerFn(registerPickup);
+function clearStaffStorage() {
+  localStorage.removeItem(PIN_KEY);
+  localStorage.removeItem(SESSION_KEY);
+}
 
+function ScannerPage() {
+  const navigate = useNavigate();
+  const search = Route.useSearch();
+  const pinFromUrl =
+    search.pin ??
+    (typeof window === "undefined"
+      ? undefined
+      : (new URLSearchParams(window.location.search).get("pin") ?? undefined)?.replace(/\D/g, "").slice(0, 6));
+
+
+  const login = useServerFn(staffLogin);
+  const lookupStaff = useServerFn(staffGetOrder);
+  const pickupStaff = useServerFn(registerPickup);
+  const readyStaff = useServerFn(staffSetItemStatus);
+  const lookupOwner = useServerFn(ownerFetchVoucher);
+  const pickupOwner = useServerFn(ownerRegisterPickup);
+  const readyOwner = useServerFn(ownerSetItemStatusByCode);
+
+  const [mode, setMode] = useState<"loading" | "owner" | "pin" | "login">("loading");
+  const [owner, setOwner] = useState<{ name: string } | null>(null);
   const [pin, setPin] = useState("");
   const [pinInput, setPinInput] = useState("");
   const [session, setSession] = useState<StaffSession | null>(null);
-  const [voucher, setVoucher] = useState<VoucherPayload | null>(null);
-  const [quantities, setQuantities] = useState<Record<string, number>>({});
-  const [manualCode, setManualCode] = useState("");
+  const bootstrapped = useRef(false);
 
-  useEffect(() => {
-    const savedPin = localStorage.getItem(PIN_KEY);
-    const savedSession = localStorage.getItem(SESSION_KEY);
-    if (savedPin && savedSession) {
-      setPin(savedPin);
-      setSession(JSON.parse(savedSession) as StaffSession);
-    }
-  }, []);
 
   const loginMutation = useMutation({
     mutationFn: (value: string) => login({ data: { pin: value } }),
     onSuccess: (data, value) => {
       if (!data) {
-        toast.error("PIN inválido");
+        setMode("login");
+        toast.error("PIN inválido ou desativado. Confira em Painel > Equipe.");
         return;
       }
       localStorage.setItem(PIN_KEY, value);
       localStorage.setItem(SESSION_KEY, JSON.stringify(data));
       setPin(value);
       setSession(data);
+      setMode("pin");
+      if (pinFromUrl) void navigate({ to: "/scanner", search: {}, replace: true });
       toast.success(`Olá, ${data.name}`);
     },
-    onError: (error: Error) => toast.error(error.message || "Não foi possível validar o PIN"),
+    onError: (error: Error) => {
+      setMode("login");
+      toast.error(error.message || "Não foi possível validar o PIN");
+    },
   });
 
-  const loadMutation = useMutation({
-    mutationFn: (code: string) => lookup({ data: { pin, code } }),
-    onSuccess: (result) => {
-      if (result.error) {
-        toast.error(result.error);
+  // Decide o modo: dono logado entra direto; senão revalida o PIN salvo/do link.
+  useEffect(() => {
+    if (bootstrapped.current) return;
+    bootstrapped.current = true;
+    let active = true;
+    void (async () => {
+      const { data: auth } = await supabase.auth.getUser();
+      if (!active) return;
+
+      if (auth.user) {
+        clearStaffStorage();
+        const { data: rows } = await supabase.from("establishments").select("name").order("created_at").limit(1);
+        if (!active) return;
+        setOwner({ name: rows?.[0]?.name ?? "seu estabelecimento" });
+        setMode("owner");
         return;
       }
-      const data = result.voucher;
-      if (!data) {
-        toast.error("Voucher não encontrado neste estabelecimento");
+
+      const urlPin = pinFromUrl;
+      console.log("[scanner-debug]", { urlPin, search, loc: window.location.search, user: !!auth.user });
+
+      if (urlPin && urlPin.length >= 4) {
+        loginMutation.mutate(urlPin);
         return;
       }
-      setVoucher(data);
-      setQuantities(
-        Object.fromEntries(data.items.map((item) => [item.id, item.available_quantity > 0 ? item.available_quantity : 0])),
-      );
-    },
-    onError: (error: Error) => toast.error(error.message || "Falha ao consultar o voucher"),
-  });
 
 
-  const pickupMutation = useMutation({
-    mutationFn: () =>
-      pickup({
-        data: {
-          pin,
-          code: voucher!.order.code,
-          items: Object.entries(quantities)
-            .filter(([, quantity]) => quantity > 0)
-            .map(([item_id, quantity]) => ({ item_id, quantity })),
-        },
-      }),
-    onSuccess: (data) => {
-      if (!data) {
-        toast.error("Não foi possível registrar a retirada");
+      const savedPin = localStorage.getItem(PIN_KEY);
+      if (!savedPin) {
+        setMode("login");
         return;
       }
-      setVoucher(data);
-      setQuantities(Object.fromEntries(data.items.map((item) => [item.id, 0])));
-      toast.success("Retirada registrada");
-    },
-    onError: (error: Error) => toast.error(error.message || "Falha ao registrar a retirada"),
-  });
+      const revalidated = await login({ data: { pin: savedPin } });
+      if (!active) return;
+      if (!revalidated) {
+        clearStaffStorage();
+        setMode("login");
+        toast.error("Sua sessão do balcão expirou. Informe o PIN novamente.");
+        return;
+      }
+      localStorage.setItem(SESSION_KEY, JSON.stringify(revalidated));
+      setPin(savedPin);
+      setSession(revalidated);
+      setMode("pin");
+    })();
+    return () => {
+      active = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  const handleDetected = useCallback(
-    (raw: string) => {
-      const code = extractOrderCode(raw);
-      if (!code || loadMutation.isPending) return;
-      loadMutation.mutate(code);
-    },
-    [loadMutation],
-  );
+  if (mode === "loading") {
+    return (
+      <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">
+        Abrindo o balcão…
+      </div>
+    );
+  }
 
-  if (!session) {
+  if (mode === "login") {
     return (
       <div className="flex min-h-screen items-center justify-center bg-secondary/40 px-6">
         <form
@@ -137,7 +162,7 @@ function ScannerPage() {
           <ScanLine className="size-7 text-primary" aria-hidden />
           <h1 className="mt-5 text-2xl font-semibold">Scanner do balcão</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Informe o PIN de funcionário para liberar a leitura de vouchers.
+            Informe o PIN do seu estande para liberar a leitura de vouchers.
           </p>
           <div className="mt-6">
             <Label htmlFor="pin">PIN</Label>
@@ -156,181 +181,90 @@ function ScannerPage() {
             {loginMutation.isPending ? "Validando…" : "Entrar"}
           </Button>
           <p className="mt-4 text-center text-xs text-muted-foreground">
-            Use o PIN cadastrado em Painel &gt; Equipe. Demonstração: 1234
+            O PIN é emitido pela conta do estabelecimento em Painel &gt; Equipe.
           </p>
+          <Button asChild variant="link" className="mt-2 w-full text-xs">
+            <Link to="/auth">Sou o dono — entrar com login</Link>
+          </Button>
         </form>
       </div>
     );
   }
 
-  const totalSelected = Object.values(quantities).reduce((sum, quantity) => sum + quantity, 0);
-  const allDelivered =
-    voucher && voucher.items.every((item) => item.available_quantity === 0);
+  const isOwner = mode === "owner";
 
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-5 py-4">
-          <div>
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-5 py-4">
+          <div className="min-w-0">
             <p className="font-display text-lg font-semibold">
               Tap<span className="text-primary">Go</span> · Balcão
             </p>
-            <p className="text-xs text-muted-foreground">
-              {session.name} · {STAFF_ROLE_LABEL[session.role] ?? session.role} · {session.establishment}
+            <p className="flex items-center gap-1 truncate text-xs text-muted-foreground">
+              {isOwner ? (
+                <>
+                  <ShieldCheck className="size-3.5 text-success" aria-hidden />
+                  Dono · {owner?.name} · acesso a todos os estandes
+                </>
+              ) : (
+                <>
+                  {session?.establishment}
+                  {session?.station ? ` · ${session.station}` : ""}
+                  {session?.event ? ` · ${session.event}` : ""} · {session?.name} ·{" "}
+                  {STAFF_ROLE_LABEL[session?.role ?? "scanner"] ?? session?.role}
+                </>
+              )}
             </p>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              localStorage.removeItem(PIN_KEY);
-              localStorage.removeItem(SESSION_KEY);
-              setSession(null);
-              setVoucher(null);
-              setPin("");
-            }}
-          >
-            <LogOut className="mr-2 size-4" />
-            Sair
-          </Button>
+          <div className="flex items-center gap-2">
+            {isOwner ? (
+              <Button asChild variant="outline" size="sm">
+                <Link to="/admin">Voltar ao painel</Link>
+              </Button>
+            ) : (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  clearStaffStorage();
+                  setSession(null);
+                  setPin("");
+                  setPinInput("");
+                  setMode("login");
+                }}
+              >
+                <LogOut className="mr-2 size-4" />
+                Trocar balcão
+              </Button>
+            )}
+          </div>
         </div>
       </header>
 
-      <main className="mx-auto grid max-w-5xl gap-8 px-5 py-8 lg:grid-cols-2">
-        <section>
-          <h1 className="text-xl font-semibold">Leitor de voucher</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            A câmera fica pausada enquanto um pedido está aberto.
-          </p>
-          <div className="mt-4">
-            <QrScanner onDetected={handleDetected} paused={Boolean(voucher)} />
-          </div>
-
-          <form
-            className="mt-4 flex gap-2"
-            onSubmit={(event) => {
-              event.preventDefault();
-              if (manualCode.trim()) loadMutation.mutate(extractOrderCode(manualCode));
-            }}
-          >
-            <Input
-              value={manualCode}
-              onChange={(event) => setManualCode(event.target.value)}
-              placeholder="Digitar código do pedido"
-              aria-label="Código do pedido"
+      <main className="mx-auto max-w-6xl px-5 py-8">
+        <h1 className="text-xl font-semibold">Leitor de voucher</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          A câmera fica pausada enquanto um pedido está aberto. Cada voucher tem um código único.
+        </p>
+        <div className="mt-6">
+          {isOwner ? (
+            <PickupConsole
+              onLookup={(code) => lookupOwner({ data: { code } })}
+              onRegister={(code, items) => pickupOwner({ data: { code, items } })}
+              onMarkReady={(code, itemId) => readyOwner({ data: { code, itemId, status: "pronto" } })}
             />
-            <Button type="submit" variant="outline" disabled={loadMutation.isPending}>
-              Buscar
-            </Button>
-          </form>
-        </section>
-
-        <section>
-          {!voucher ? (
-            <div className="flex h-full min-h-64 items-center justify-center rounded-2xl border border-dashed p-8 text-center text-sm text-muted-foreground">
-              {loadMutation.isPending ? "Consultando voucher…" : "Nenhum voucher lido ainda."}
-            </div>
           ) : (
-            <div className="rounded-2xl border p-6">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="font-display text-2xl font-semibold tracking-[0.2em]">{voucher.order.code}</p>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {voucher.menu?.name ?? "Cardápio"} · {formatBRL(voucher.order.total_cents)}
-                  </p>
-                </div>
-                <Badge variant={voucher.order.payment_status === "pago" ? "default" : "destructive"}>
-                  {voucher.order.payment_status === "pago"
-                    ? ORDER_STATUS_LABEL[voucher.order.status]
-                    : "Pagamento pendente"}
-                </Badge>
-              </div>
-
-              <Separator className="my-5" />
-
-              {voucher.order.payment_status !== "pago" ? (
-                <p className="text-sm text-destructive">
-                  Este pedido ainda não foi pago. Não libere os produtos.
-                </p>
-              ) : allDelivered ? (
-                <p className="flex items-center gap-2 text-sm text-success">
-                  <CheckCircle2 className="size-5" aria-hidden /> Todos os itens já foram retirados.
-                </p>
-              ) : (
-                <ul className="space-y-3">
-                  {voucher.items.map((item) => (
-                    <li key={item.id} className="flex items-center gap-3 rounded-xl border p-3">
-                      <span aria-hidden className="text-2xl">
-                        {item.emoji ?? "🍸"}
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <p className="font-medium">{item.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {item.available_quantity} de {item.quantity} disponível
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Button
-                          size="icon"
-                          variant="outline"
-                          aria-label={`Menos um ${item.name}`}
-                          disabled={(quantities[item.id] ?? 0) <= 0}
-                          onClick={() =>
-                            setQuantities((current) => ({
-                              ...current,
-                              [item.id]: Math.max(0, (current[item.id] ?? 0) - 1),
-                            }))
-                          }
-                        >
-                          <Minus className="size-4" />
-                        </Button>
-                        <span className="w-8 text-center font-semibold">{quantities[item.id] ?? 0}</span>
-                        <Button
-                          size="icon"
-                          aria-label={`Mais um ${item.name}`}
-                          disabled={(quantities[item.id] ?? 0) >= item.available_quantity}
-                          onClick={() =>
-                            setQuantities((current) => ({
-                              ...current,
-                              [item.id]: Math.min(item.available_quantity, (current[item.id] ?? 0) + 1),
-                            }))
-                          }
-                        >
-                          <Plus className="size-4" />
-                        </Button>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              )}
-
-              <div className="mt-6 grid gap-2">
-                <Button
-                  className="h-14 text-base"
-                  disabled={
-                    totalSelected === 0 || pickupMutation.isPending || voucher.order.payment_status !== "pago"
-                  }
-                  onClick={() => pickupMutation.mutate()}
-                >
-                  {pickupMutation.isPending
-                    ? "Registrando…"
-                    : `Confirmar retirada de ${totalSelected} ${totalSelected === 1 ? "item" : "itens"}`}
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setVoucher(null);
-                    setQuantities({});
-                    setManualCode("");
-                  }}
-                >
-                  <RotateCcw className="mr-2 size-4" />
-                  Ler outro voucher
-                </Button>
-              </div>
-            </div>
+            <PickupConsole
+              onLookup={(code) => lookupStaff({ data: { pin, code } })}
+              onRegister={async (code, items) => {
+                const voucher = await pickupStaff({ data: { pin, code, items } });
+                return { voucher, error: voucher ? null : "Não foi possível registrar a retirada" };
+              }}
+              onMarkReady={(code, itemId) => readyStaff({ data: { pin, code, itemId, status: "pronto" } })}
+            />
           )}
-        </section>
+        </div>
       </main>
     </div>
   );

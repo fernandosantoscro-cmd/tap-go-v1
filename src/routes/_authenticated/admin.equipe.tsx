@@ -1,14 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { KeyRound, Plus, Trash2 } from "lucide-react";
+import { Copy, KeyRound, Plus, Send, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { QrCode } from "@/components/qr-code";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { useEstablishment, usePaymentMethods, useStaff, useTableMutation } from "@/lib/admin-db";
+import { useEstablishment, useEvents, usePaymentMethods, useStaff, useTableMutation } from "@/lib/admin-db";
 import { STAFF_ROLE_LABEL } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/admin/equipe")({
@@ -18,14 +19,26 @@ export const Route = createFileRoute("/_authenticated/admin/equipe")({
 const ROLES = ["administrador", "atendente", "cozinha", "bartender", "scanner"] as const;
 type StaffRoleValue = (typeof ROLES)[number];
 
+function scannerLink(pin: string) {
+  const origin = typeof window === "undefined" ? "" : window.location.origin;
+  return `${origin}/scanner?pin=${pin}`;
+}
+
 function TeamPage() {
   const establishment = useEstablishment();
   const staff = useStaff(establishment.data?.id);
+  const events = useEvents(establishment.data?.id);
   const methods = usePaymentMethods(establishment.data?.id);
   const staffMutation = useTableMutation("staff", ["staff"]);
   const methodMutation = useTableMutation("payment_methods", ["payment-methods"]);
 
-  const [form, setForm] = useState<{ name: string; role: StaffRoleValue; pin: string }>({ name: "", role: "scanner", pin: "" });
+  const [form, setForm] = useState<{ name: string; role: StaffRoleValue; pin: string; station: string; eventId: string }>({
+    name: "",
+    role: "scanner",
+    pin: "",
+    station: "",
+    eventId: "",
+  });
 
   function submit(event: React.FormEvent) {
     event.preventDefault();
@@ -42,16 +55,32 @@ function TeamPage() {
           name: form.name,
           role: form.role,
           pin: form.pin,
+          station: form.station.trim() || null,
+          event_id: form.eventId || null,
         },
       },
       {
         onSuccess: () => {
           toast.success("Funcionário cadastrado");
-          setForm({ name: "", role: "scanner", pin: "" });
+          setForm({ name: "", role: "scanner", pin: "", station: "", eventId: "" });
         },
         onError: (error: Error) => toast.error(error.message),
       },
     );
+  }
+
+  async function share(person: { name: string; pin: string }) {
+    const link = scannerLink(person.pin);
+    const text = `Acesso ao balcão TapGo (${person.name}) — PIN ${person.pin}: ${link}`;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: "Acesso ao balcão TapGo", text, url: link });
+        return;
+      } catch {
+        /* usuário cancelou */
+      }
+    }
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noreferrer");
   }
 
   return (
@@ -59,11 +88,12 @@ function TeamPage() {
       <header>
         <h1 className="text-3xl font-semibold">Equipe & Pagamentos</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          O PIN é a credencial do balcão: com ele o funcionário abre o scanner e registra retiradas.
+          O PIN é uma credencial emitida por esta conta: o funcionário abre o scanner do estande dele e registra
+          retiradas, sem acesso ao painel. Você, como dono, entra no scanner direto pelo login.
         </p>
       </header>
 
-      <form onSubmit={submit} className="grid gap-4 rounded-2xl border bg-background p-6 md:grid-cols-[2fr_1fr_1fr_auto]">
+      <form onSubmit={submit} className="grid gap-4 rounded-2xl border bg-background p-6 md:grid-cols-3">
         <div>
           <Label htmlFor="s-name">Nome</Label>
           <Input
@@ -101,6 +131,32 @@ function TeamPage() {
             required
           />
         </div>
+        <div>
+          <Label htmlFor="s-station">Estande / balcão</Label>
+          <Input
+            id="s-station"
+            className="mt-1"
+            value={form.station}
+            onChange={(e) => setForm({ ...form, station: e.target.value })}
+            placeholder="Ex.: Bar Central"
+          />
+        </div>
+        <div>
+          <Label htmlFor="s-event">Evento</Label>
+          <select
+            id="s-event"
+            className="mt-1 h-10 w-full rounded-md border bg-background px-3 text-sm"
+            value={form.eventId}
+            onChange={(e) => setForm({ ...form, eventId: e.target.value })}
+          >
+            <option value="">Todos os eventos</option>
+            {(events.data ?? []).map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.name}
+              </option>
+            ))}
+          </select>
+        </div>
         <div className="flex items-end">
           <Button type="submit" disabled={staffMutation.isPending}>
             <Plus className="mr-2 size-4" /> Adicionar
@@ -110,12 +166,34 @@ function TeamPage() {
 
       <div className="divide-y rounded-2xl border bg-background">
         {(staff.data ?? []).map((person) => (
-          <div key={person.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
-            <div>
-              <p className="font-medium">{person.name}</p>
-              <p className="flex items-center gap-2 text-xs text-muted-foreground">
-                <KeyRound className="size-3.5" aria-hidden /> PIN {person.pin}
-              </p>
+          <div key={person.id} className="flex flex-wrap items-center justify-between gap-4 px-5 py-4">
+            <div className="flex items-center gap-4">
+              <QrCode value={scannerLink(person.pin)} size={84} title={`Acesso do balcão de ${person.name}`} />
+              <div>
+                <p className="font-medium">{person.name}</p>
+                <p className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <KeyRound className="size-3.5" aria-hidden /> PIN {person.pin}
+                  {person.station ? ` · ${person.station}` : ""}
+                  {person.event_id
+                    ? ` · ${events.data?.find((item) => item.id === person.event_id)?.name ?? "evento"}`
+                    : " · todos os eventos"}
+                </p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      void navigator.clipboard.writeText(scannerLink(person.pin));
+                      toast.success("Link do balcão copiado");
+                    }}
+                  >
+                    <Copy className="mr-2 size-3.5" /> Copiar link
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => void share(person)}>
+                    <Send className="mr-2 size-3.5" /> Enviar
+                  </Button>
+                </div>
+              </div>
             </div>
             <div className="flex items-center gap-3">
               <Badge variant="secondary">{STAFF_ROLE_LABEL[person.role] ?? person.role}</Badge>

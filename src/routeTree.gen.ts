@@ -22,6 +22,7 @@ import { Route as AuthenticatedAdminConfiguracoesRouteImport } from './routes/_a
 import { Route as AuthenticatedAdminEquipeRouteImport } from './routes/_authenticated/admin.equipe'
 import { Route as AuthenticatedAdminEventosRouteImport } from './routes/_authenticated/admin.eventos'
 import { Route as AuthenticatedAdminPedidosRouteImport } from './routes/_authenticated/admin.pedidos'
+import { Route as AuthenticatedAdminQrcodesRouteImport } from './routes/_authenticated/admin.qrcodes'
 import { Route as AuthenticatedAdminRelatoriosRouteImport } from './routes/_authenticated/admin.relatorios'
 import { Route as AuthenticatedAdminRetiradaRouteImport } from './routes/_authenticated/admin.retirada'
 import { Route as AuthenticatedAdminCardapiosIndexRouteImport } from './routes/_authenticated/admin.cardapios.index'
@@ -95,6 +96,12 @@ const AuthenticatedAdminPedidosRoute =
     path: '/pedidos',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminQrcodesRoute =
+  AuthenticatedAdminQrcodesRouteImport.update({
+    id: '/qrcodes',
+    path: '/qrcodes',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminRelatoriosRoute =
   AuthenticatedAdminRelatoriosRouteImport.update({
     id: '/relatorios',
@@ -132,6 +139,7 @@ export interface FileRoutesByFullPath {
   '/admin/equipe': typeof AuthenticatedAdminEquipeRoute
   '/admin/eventos': typeof AuthenticatedAdminEventosRoute
   '/admin/pedidos': typeof AuthenticatedAdminPedidosRoute
+  '/admin/qrcodes': typeof AuthenticatedAdminQrcodesRoute
   '/admin/relatorios': typeof AuthenticatedAdminRelatoriosRoute
   '/admin/retirada': typeof AuthenticatedAdminRetiradaRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
@@ -149,6 +157,7 @@ export interface FileRoutesByTo {
   '/admin/equipe': typeof AuthenticatedAdminEquipeRoute
   '/admin/eventos': typeof AuthenticatedAdminEventosRoute
   '/admin/pedidos': typeof AuthenticatedAdminPedidosRoute
+  '/admin/qrcodes': typeof AuthenticatedAdminQrcodesRoute
   '/admin/relatorios': typeof AuthenticatedAdminRelatoriosRoute
   '/admin/retirada': typeof AuthenticatedAdminRetiradaRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
@@ -169,6 +178,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/equipe': typeof AuthenticatedAdminEquipeRoute
   '/_authenticated/admin/eventos': typeof AuthenticatedAdminEventosRoute
   '/_authenticated/admin/pedidos': typeof AuthenticatedAdminPedidosRoute
+  '/_authenticated/admin/qrcodes': typeof AuthenticatedAdminQrcodesRoute
   '/_authenticated/admin/relatorios': typeof AuthenticatedAdminRelatoriosRoute
   '/_authenticated/admin/retirada': typeof AuthenticatedAdminRetiradaRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
@@ -189,6 +199,7 @@ export interface FileRouteTypes {
     | '/admin/equipe'
     | '/admin/eventos'
     | '/admin/pedidos'
+    | '/admin/qrcodes'
     | '/admin/relatorios'
     | '/admin/retirada'
     | '/admin/'
@@ -206,6 +217,7 @@ export interface FileRouteTypes {
     | '/admin/equipe'
     | '/admin/eventos'
     | '/admin/pedidos'
+    | '/admin/qrcodes'
     | '/admin/relatorios'
     | '/admin/retirada'
     | '/admin'
@@ -225,6 +237,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/equipe'
     | '/_authenticated/admin/eventos'
     | '/_authenticated/admin/pedidos'
+    | '/_authenticated/admin/qrcodes'
     | '/_authenticated/admin/relatorios'
     | '/_authenticated/admin/retirada'
     | '/_authenticated/admin/'
@@ -335,6 +348,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminPedidosRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/qrcodes': {
+      id: '/_authenticated/admin/qrcodes'
+      path: '/qrcodes'
+      fullPath: '/admin/qrcodes'
+      preLoaderRoute: typeof AuthenticatedAdminQrcodesRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/relatorios': {
       id: '/_authenticated/admin/relatorios'
       path: '/relatorios'
@@ -371,6 +391,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminEquipeRoute: typeof AuthenticatedAdminEquipeRoute
   AuthenticatedAdminEventosRoute: typeof AuthenticatedAdminEventosRoute
   AuthenticatedAdminPedidosRoute: typeof AuthenticatedAdminPedidosRoute
+  AuthenticatedAdminQrcodesRoute: typeof AuthenticatedAdminQrcodesRoute
   AuthenticatedAdminRelatoriosRoute: typeof AuthenticatedAdminRelatoriosRoute
   AuthenticatedAdminRetiradaRoute: typeof AuthenticatedAdminRetiradaRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
@@ -383,6 +404,7 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminEquipeRoute: AuthenticatedAdminEquipeRoute,
   AuthenticatedAdminEventosRoute: AuthenticatedAdminEventosRoute,
   AuthenticatedAdminPedidosRoute: AuthenticatedAdminPedidosRoute,
+  AuthenticatedAdminQrcodesRoute: AuthenticatedAdminQrcodesRoute,
   AuthenticatedAdminRelatoriosRoute: AuthenticatedAdminRelatoriosRoute,
   AuthenticatedAdminRetiradaRoute: AuthenticatedAdminRetiradaRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
@@ -417,13 +439,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
