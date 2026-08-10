@@ -175,10 +175,12 @@ function ScannerPage() {
           }}
         >
           <ScanLine className="size-7 text-primary" aria-hidden />
-          <h1 className="mt-5 text-2xl font-semibold">Scanner do balcão</h1>
+          <h1 className="mt-5 text-2xl font-semibold">Balcão do atendente</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Informe o PIN do seu estande para liberar a leitura de vouchers.
+            Esta tela é só para quem trabalha no balcão. Você não precisa de conta nem senha: use o PIN do seu
+            estande, entregue pelo dono do estabelecimento.
           </p>
+
           <div className="mt-6">
             <Label htmlFor="pin">PIN</Label>
             <Input
