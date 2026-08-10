@@ -117,7 +117,7 @@ function splitCsvLine(line: string, delimiter: string) {
   let current = "";
   let quoted = false;
   for (let i = 0; i < line.length; i += 1) {
-    const char = line[i];
+    const char = line[i] ?? "";
     if (char === '"') {
       if (quoted && line[i + 1] === '"') {
         current += '"';
