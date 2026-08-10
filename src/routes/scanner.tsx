@@ -109,7 +109,6 @@ function ScannerPage() {
       }
 
       const urlPin = pinFromUrl;
-      console.log("[scanner-debug]", { urlPin, search, loc: window.location.search, user: !!auth.user });
 
       if (urlPin && urlPin.length >= 4) {
         loginMutation.mutate(urlPin);
