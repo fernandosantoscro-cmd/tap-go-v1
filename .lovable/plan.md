@@ -1,40 +1,50 @@
-# Retirada redonda: dono e funcionário no mesmo scanner
+# Retirada redonda: um leitor, vínculo sempre pela conta
 
-Hoje existem duas telas separadas: `/admin/retirada` (exige login do dono) e `/scanner` (exige PIN). O PIN funciona de verdade — a validação acontece no servidor e o PIN é criado automaticamente ao criar o estabelecimento (visível em Painel > Equipe) — mas o processo não está redondo: a tela do balcão é mais pobre que a do dono, o PIN fica salvo no aparelho e vira sessão "velha" quando você troca de conta, e não existe uma forma fácil de entregar o acesso ao funcionário.
+Você está certo no fundamento: **toda leitura precisa estar vinculada à conta do estabelecimento**. Já é assim hoje — o PIN não é um acesso solto: ele é emitido pela sua conta em Painel > Equipe e o servidor resolve o estabelecimento a partir do PIN, recusando vouchers de qualquer outro bar. O que falta é o nível abaixo: com vários eventos e estandes, o PIN precisa dizer *em qual posto* aquela pessoa está.
+
+Modelo final:
+
+```text
+Conta (login do dono)
+└── Estabelecimento
+    ├── Evento (ex.: Festival Sexta)
+    │    ├── Estande/Balcão "Bar Central"  → PIN 4821 (Ana, João)
+    │    └── Estande/Balcão "Food Truck"   → PIN 7130 (Bruno)
+    └── Cardápios vinculados a cada estande
+```
+
+O dono entra com login (acesso total, todos os estandes). O funcionário entra com o PIN daquele estande — credencial emitida pela conta, revogável a qualquer momento, sem dar acesso ao painel.
 
 ## O que muda
 
-**1. Um único leitor, dois jeitos de entrar**
-`/scanner` passa a ser a tela oficial de retirada:
-- Se você já está logado como dono, ela entra direto, sem pedir PIN (mostra "Você está como dono de X").
-- Se ninguém está logado, pede o PIN do funcionário como hoje.
-- `/admin/retirada` continua existindo no painel, mas apenas reaproveitando o mesmo componente — nada de duas experiências diferentes.
+**1. Estandes/postos de trabalho**
+Cada funcionário passa a ter um posto: evento + estande (opcional — sem posto, atende o bar inteiro). O scanner mostra no topo "Bar Central · Festival Sexta" para não haver dúvida de onde a pessoa está trabalhando.
 
-**2. O balcão ganha tudo o que o dono já tinha**
-A tela do funcionário passa a mostrar a separação Balcão (entrega imediata) x Cozinha (com preparo), o aviso "Em preparo", o tempo estimado e o botão de marcar item como pronto. Assim o funcionário não precisa chamar o dono para nada.
+**2. Um único leitor, dois jeitos de entrar**
+`/scanner` vira a tela oficial de retirada:
+- dono logado entra direto, sem PIN, e pode escolher qual estande está operando;
+- sem login, pede o PIN do funcionário;
+- `/admin/retirada` continua no painel, mas usando exatamente a mesma tela.
 
-**3. Convidar o funcionário em um clique**
-Em Painel > Equipe, cada pessoa ganha:
-- um link pronto de acesso (abre o scanner já com o PIN preenchido),
-- um QR Code desse link para o funcionário escanear com o celular dele,
-- botões de copiar link e enviar por WhatsApp.
-O PIN continua sendo digitável manualmente como alternativa.
+**3. O balcão ganha tudo o que o dono já tinha**
+Separação Balcão (imediato) x Cozinha (com preparo), aviso "Em preparo", tempo estimado e botão de marcar item pronto — o funcionário não precisa chamar o dono.
 
-**4. Fim da sessão velha ("voucher de outro estabelecimento")**
-- Ao abrir o scanner, o PIN salvo é revalidado no servidor; se não valer mais, a sessão é limpa automaticamente com aviso claro.
-- O cabeçalho mostra sempre bar + nome + função, com botão "Trocar balcão".
-- Quando o dono faz login/logout no painel, qualquer sessão de PIN antiga guardada no aparelho é descartada.
+**4. Convidar o funcionário em um clique**
+Em Equipe, cada pessoa ganha link pronto de acesso (scanner com PIN preenchido), QR Code desse link, copiar e enviar por WhatsApp. Digitar o PIN à mão continua funcionando.
 
-**5. Caminhos óbvios na entrada**
-- Home: o botão vira "Sou funcionário — entrar com PIN" e o do dono fica destacado.
-- Painel: atalho "Abrir scanner deste bar" no topo de Retirada e no dashboard.
-- Equipe: texto curto explicando quem usa PIN e quem usa login.
+**5. Fim da sessão velha ("voucher de outro estabelecimento")**
+- Ao abrir, o PIN salvo é revalidado no servidor; inválido = sessão limpa com aviso claro.
+- Cabeçalho com bar + estande + pessoa e botão "Trocar balcão".
+- Login/logout do dono descarta qualquer sessão de PIN antiga no aparelho.
+
+**6. Relatórios por estande**
+Retiradas passam a registrar o estande, então Relatórios ganha o corte "por estande/evento" além do já existente por data.
 
 ## Detalhes técnicos
 
-- `src/components/pickup-console.tsx` (novo): extrai a UI de leitura/retirada de `admin.retirada.tsx`, recebendo por props as funções de servidor (dono: `owner*`; funcionário: `staff*` com PIN) — sem duplicar lógica de grupos.
-- `src/routes/scanner.tsx`: passa a checar `supabase.auth.getUser()` (client-only) para decidir modo dono x PIN, revalida o PIN salvo via `staffLogin` no mount e limpa `tapgo.staff.*` quando inválido ou quando o `establishment` da sessão difere.
-- `src/lib/tapgo.functions.ts`: `staffGetOrder`/`registerPickup` mantêm o formato `{ voucher, error }`; adicionar `staffSetItemStatus` (já existe RPC com PIN) para o "marcar pronto" no balcão.
-- `src/routes/_authenticated/admin.equipe.tsx`: gera `\${origin}/scanner?pin=<pin>` + `<QrCode>` por funcionário; `scanner.tsx` lê `?pin=` via search params validados, faz login e remove o parâmetro da URL.
-- `src/routes/_authenticated/admin.retirada.tsx` passa a renderizar `PickupConsole` em modo dono.
-- Sem mudanças de banco: `staff_login`, `staff_get_order`, `register_pickup` e as funções do dono já cobrem tudo.
+- Migração: `staff.event_id uuid null references events(id)` e `staff.station text null` (ou tabela `stations` se preferir cadastro próprio — proponho `station` como texto no MVP para não inflar o cadastro); `staff_login` passa a retornar `event_id`/`station`; `register_pickup` grava `station` em `pickups`.
+- `src/components/pickup-console.tsx` (novo): extrai a UI de `admin.retirada.tsx` e recebe por props as funções de servidor (dono: `owner*`; funcionário: `staff*` com PIN) — lógica de grupos única em `voucher-groups.ts`.
+- `src/routes/scanner.tsx`: `supabase.auth.getUser()` (client-only) decide modo dono x PIN; revalida PIN salvo via `staffLogin` no mount; lê `?pin=` validado e limpa o parâmetro da URL; limpa `tapgo.staff.*` quando o estabelecimento da sessão mudar.
+- `src/lib/tapgo.functions.ts`: mantém `{ voucher, error }`; adiciona `staffSetItemStatus` sobre a RPC `staff_set_status`.
+- `admin.equipe.tsx`: seleção de evento/estande no cadastro, link + `<QrCode>` por funcionário; `admin.relatorios.tsx`: agrupamento por estande.
+- `admin.retirada.tsx` passa a renderizar `PickupConsole` em modo dono.
