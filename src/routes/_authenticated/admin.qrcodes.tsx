@@ -5,6 +5,8 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { QrCode } from "@/components/qr-code";
+import { StaffHandoffDialog } from "@/components/staff-handoff-dialog";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -88,13 +90,17 @@ function QrCodesPage() {
 
   return (
     <div className="space-y-8">
-      <header className="print:hidden">
-        <h1 className="text-3xl font-semibold">QR Codes dos estandes</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Cada estande tem um cardápio com código único: o QR abre só o cardápio dele e os pedidos nascem vinculados
-          àquele estande. Imprima e cole no balcão.
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-3 print:hidden">
+        <div>
+          <h1 className="text-3xl font-semibold">QR Codes dos estandes</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Cada estande tem um cardápio com código único: o QR abre só o cardápio dele e os pedidos nascem vinculados
+            àquele estande. Imprima e cole no balcão.
+          </p>
+        </div>
+        <StaffHandoffDialog />
       </header>
+
 
       <form
         onSubmit={createStation}

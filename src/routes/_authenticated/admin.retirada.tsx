@@ -1,11 +1,11 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { ExternalLink } from "lucide-react";
 import { useState } from "react";
 
 import { OrderQueue } from "@/components/order-queue";
 import { PickupConsole } from "@/components/pickup-console";
+import { StaffHandoffDialog } from "@/components/staff-handoff-dialog";
 import { Button } from "@/components/ui/button";
 import { useEstablishment } from "@/lib/admin-db";
 import {
@@ -14,6 +14,7 @@ import {
   ownerRegisterPickup,
   ownerSetItemStatusByCode,
 } from "@/lib/owner-pickup.functions";
+
 
 export const Route = createFileRoute("/_authenticated/admin/retirada")({
   component: PickupPage,
@@ -42,12 +43,8 @@ function PickupPage() {
           <Button asChild variant="outline">
             <Link to="/admin/qrcodes">QR Codes dos estandes</Link>
           </Button>
-          <Button asChild variant="outline">
-            <a href="/scanner" target="_blank" rel="noreferrer">
-              Abrir em outro aparelho
-              <ExternalLink className="ml-2 size-4" />
-            </a>
-          </Button>
+          <StaffHandoffDialog />
+
         </div>
       </header>
 
