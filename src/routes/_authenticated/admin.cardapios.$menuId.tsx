@@ -3,6 +3,7 @@ import { ArrowLeft, Download, Plus, RefreshCcw, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { MenuImportDialog } from "@/components/menu-import-dialog";
 import { QrCode } from "@/components/qr-code";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
