@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, notFound } from "@tanstack/react-router";
-import { CheckCircle2, Clock, Download, Flame, PartyPopper, Share2 } from "lucide-react";
+import { Bell, CheckCircle2, Clock, Download, Flame, PartyPopper, Share2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -12,7 +12,9 @@ import { formatBRL, ORDER_STATUS_LABEL } from "@/lib/format";
 import { downloadReceipt, shareReceipt } from "@/lib/receipt";
 import { fetchVoucher } from "@/lib/tapgo.functions";
 import type { VoucherItem, VoucherPayload } from "@/lib/tapgo-types";
+import { useOrderRealtime } from "@/lib/use-order-realtime";
 import { isReadyForPickup, kitchenItemLabel, splitVoucherItems } from "@/lib/voucher-groups";
+
 
 
 export const Route = createFileRoute("/voucher/$code")({
