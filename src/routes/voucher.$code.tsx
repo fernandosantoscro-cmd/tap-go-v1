@@ -147,6 +147,20 @@ function VoucherPage() {
       </header>
 
       <main className="mx-auto max-w-xl px-5 py-8">
+        {!complete && permission === "default" && (
+          <div className="mb-5 flex items-center justify-between gap-3 rounded-2xl border p-4">
+            <div>
+              <p className="font-medium">Avisar quando ficar pronto</p>
+              <p className="text-sm text-muted-foreground">
+                Receba um alerta na hora, mesmo com a tela desligada.
+              </p>
+            </div>
+            <Button size="sm" onClick={() => void enableAlerts()}>
+              <Bell className="mr-2 size-4" /> Ativar
+            </Button>
+          </div>
+        )}
+
         {!complete && readyNow.length > 0 && (
           <div className="mb-5 flex items-start gap-3 rounded-2xl border border-primary/40 bg-primary/10 p-4">
             <PartyPopper className="mt-0.5 size-5 text-primary" aria-hidden />
