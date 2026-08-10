@@ -183,9 +183,6 @@ function Landing() {
             Tap<span className="text-primary">Go</span>
           </span>
           <nav className="flex items-center gap-2">
-            <Button asChild variant="ghost" size="sm">
-              <Link to="/scanner">Balcão</Link>
-            </Button>
             <Button asChild size="sm">
               <Link to="/auth">Entrar</Link>
             </Button>
@@ -211,12 +208,9 @@ function Landing() {
               <div className="mt-9 flex flex-wrap gap-3">
                 <Button asChild size="lg" className="tap-target">
                   <Link to="/auth">
-                    Criar conta do estabelecimento
+                    Entrar
                     <ArrowRight className="ml-2 size-4" />
                   </Link>
-                </Button>
-                <Button asChild size="lg" variant="outline" className="tap-target">
-                  <Link to="/scanner">Abrir scanner do balcão</Link>
                 </Button>
               </div>
               <p className="mt-4 text-xs text-muted-foreground">
@@ -419,9 +413,6 @@ function Landing() {
                     Cardápio, carrinho, pagamento e voucher digital. Feito para quem está em pé, com pouco tempo
                     e pouca atenção.
                   </p>
-                  <Button asChild variant="link" className="mt-4 px-0">
-                    <Link to="/auth">Gerar o QR do meu cardápio</Link>
-                  </Button>
                 </div>
               </article>
               <article className="overflow-hidden rounded-2xl border bg-background">
@@ -439,9 +430,6 @@ function Landing() {
                     Eventos, cardápios, produtos, pedidos, retiradas, funcionários e relatórios. Mais o scanner
                     de balcão que dá baixa no saldo.
                   </p>
-                  <Button asChild variant="link" className="mt-4 px-0">
-                    <Link to="/scanner">Abrir scanner do balcão</Link>
-                  </Button>
                 </div>
               </article>
             </div>
@@ -474,12 +462,9 @@ function Landing() {
             <div className="flex flex-wrap gap-3">
               <Button asChild size="lg" variant="secondary" className="tap-target">
                 <Link to="/auth">
-                  Criar conta
+                  Entrar
                   <ArrowRight className="ml-2 size-4" />
                 </Link>
-              </Button>
-              <Button asChild size="lg" variant="outline" className="tap-target bg-transparent">
-                <Link to="/scanner">Ver o scanner</Link>
               </Button>
             </div>
           </div>
