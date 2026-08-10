@@ -1,0 +1,12 @@
+GRANT EXECUTE ON FUNCTION public.owns_establishment(uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.gen_public_code(integer) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.get_menu_by_code(text) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.create_order(text, jsonb, text, text) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.confirm_payment(text, text) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.staff_login(text) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.staff_open_orders(text) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.staff_get_order(text, text) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.staff_set_status(text, text, text, uuid) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.establishment_open_state(uuid) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.get_voucher(text) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.register_pickup(text, text, jsonb) TO anon, authenticated;
