@@ -1,10 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, QrCode, ReceiptText, Timer, Wallet } from "lucide-react";
+import { ArrowRight, HelpCircle, QrCode, ReceiptText, Timer, Wallet } from "lucide-react";
 
+import { OnboardingDialog } from "@/components/onboarding-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatBRL, formatDateTime, ORDER_STATUS_LABEL } from "@/lib/format";
 import { useEstablishment, useMenus, useOrders } from "@/lib/admin-db";
+
 
 export const Route = createFileRoute("/_authenticated/admin/")({
   component: Overview,
@@ -37,12 +39,26 @@ function Overview() {
 
   return (
     <div className="space-y-8">
-      <header>
-        <h1 className="text-3xl font-semibold">Visão geral</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {establishment.data?.name} · acompanhe a operação do evento em tempo real.
-        </p>
+      <OnboardingDialog />
+      <header className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-semibold">Visão geral</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {establishment.data?.name} · acompanhe a operação do evento em tempo real.
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            localStorage.removeItem("tapgo.onboarding.done");
+            window.location.reload();
+          }}
+        >
+          <HelpCircle className="mr-2 size-4" /> Rever tutorial
+        </Button>
       </header>
+
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {cards.map((card) => (
