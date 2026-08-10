@@ -1,6 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 import { CheckCircle2, Clock, Flame, Minus, Plus, RotateCcw } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { extractOrderCode, QrScanner } from "@/components/qr-scanner";
@@ -88,6 +88,7 @@ export function PickupConsole({ onLookup, onRegister, onMarkReady, openRequest, 
         return;
       }
       const total = payload.items.reduce((sum, entry) => sum + entry.quantity, 0);
+      onChanged?.();
       setVoucher(result.voucher);
       setQuantities(Object.fromEntries(result.voucher.items.map((item) => [item.id, 0])));
       playScanCue("success");
@@ -108,6 +109,7 @@ export function PickupConsole({ onLookup, onRegister, onMarkReady, openRequest, 
       }),
     onSuccess: (result) => {
       if (result.voucher) applyVoucher(result.voucher);
+      onChanged?.();
       toast.success("Item marcado como pronto");
     },
     onError: (error: Error) => toast.error(error.message || "Falha ao marcar como pronto"),
@@ -121,6 +123,14 @@ export function PickupConsole({ onLookup, onRegister, onMarkReady, openRequest, 
     },
     [loadMutation],
   );
+
+  const lastOpenRef = useRef<number>(0);
+  useEffect(() => {
+    if (!openRequest || openRequest.nonce === lastOpenRef.current) return;
+    lastOpenRef.current = openRequest.nonce;
+    loadMutation.mutate(openRequest.code);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openRequest]);
 
   const totalSelected = Object.values(quantities).reduce((sum, quantity) => sum + quantity, 0);
   const allDelivered = voucher?.items.every((item) => item.available_quantity === 0) ?? false;
