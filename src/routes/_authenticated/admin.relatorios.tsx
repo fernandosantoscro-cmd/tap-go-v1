@@ -133,11 +133,28 @@ function ReportsPage() {
       <div className="grid gap-6 lg:grid-cols-2">
         <section className="rounded-2xl border bg-background p-6">
           <h2 className="text-xl font-semibold">Retiradas no balcão</h2>
+          {(() => {
+            const byStation = new Map<string, number>();
+            for (const pickup of pickups.data ?? []) {
+              const key = pickup.station ?? "Sem estande";
+              byStation.set(key, (byStation.get(key) ?? 0) + pickup.quantity);
+            }
+            return byStation.size > 0 ? (
+              <ul className="mt-4 flex flex-wrap gap-2">
+                {[...byStation.entries()].map(([station, quantity]) => (
+                  <li key={station} className="rounded-full border px-3 py-1 text-xs text-muted-foreground">
+                    {station}: <strong className="text-foreground">{quantity}</strong> itens
+                  </li>
+                ))}
+              </ul>
+            ) : null;
+          })()}
           <ul className="mt-4 space-y-3 text-sm">
             {(pickups.data ?? []).slice(0, 12).map((pickup) => (
               <li key={pickup.id} className="flex items-center justify-between gap-3">
                 <span>
                   {pickup.quantity}× · {pickup.staff_name ?? "Funcionário"}
+                  {pickup.station ? ` · ${pickup.station}` : ""}
                 </span>
                 <span className="text-xs text-muted-foreground">{formatDateTime(pickup.created_at)}</span>
               </li>
@@ -147,6 +164,7 @@ function ReportsPage() {
             )}
           </ul>
         </section>
+
 
         <section className="rounded-2xl border bg-background p-6">
           <h2 className="text-xl font-semibold">Auditoria</h2>

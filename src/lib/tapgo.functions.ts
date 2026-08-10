@@ -115,3 +115,22 @@ export const staffSetStatus = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return (result as VoucherPayload | null) ?? null;
   });
+
+/** Marca um item específico como pronto/entregue usando o PIN do balcão. */
+export const staffSetItemStatus = createServerFn({ method: "POST" })
+  .inputValidator((data: { pin: string; code: string; itemId: string; status?: string }) => ({
+    pin: String(data.pin).slice(0, 12),
+    code: String(data.code).slice(0, 32),
+    itemId: String(data.itemId),
+    status: ["recebido", "preparando", "pronto", "entregue"].includes(String(data.status)) ? String(data.status) : "pronto",
+  }))
+  .handler(async ({ data }): Promise<{ error: string | null }> => {
+    const { publicDb } = await import("./public-db.server");
+    const { error } = await publicDb().rpc("staff_set_status", {
+      p_pin: data.pin,
+      p_order_code: data.code,
+      p_status: data.status,
+      p_item_id: data.itemId,
+    });
+    return { error: error ? error.message : null };
+  });

@@ -30,6 +30,8 @@ const nav = [
   { to: "/admin/retirada", label: "Retirada (scanner)", icon: ScanLine },
   { to: "/admin/eventos", label: "Eventos", icon: CalendarDays },
   { to: "/admin/cardapios", label: "Cardápios & QR", icon: QrCode },
+  { to: "/admin/qrcodes", label: "QR Codes dos estandes", icon: QrCode },
+
   { to: "/admin/equipe", label: "Equipe & pagamentos", icon: Users },
   { to: "/admin/relatorios", label: "Relatórios", icon: BarChart3 },
   { to: "/admin/configuracoes", label: "Configurações", icon: Settings },
@@ -100,9 +102,10 @@ function AdminLayout() {
           >
             <span className="flex items-center gap-2">
               <ScanLine className="size-4" aria-hidden />
-              Balcão com PIN (tablet)
+              Scanner em outro aparelho
             </span>
           </a>
+
         </nav>
       </aside>
 

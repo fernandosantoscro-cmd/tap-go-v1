@@ -513,6 +513,7 @@ export type Database = {
           quantity: number
           staff_id: string | null
           staff_name: string | null
+          station: string | null
         }
         Insert: {
           created_at?: string
@@ -524,6 +525,7 @@ export type Database = {
           quantity: number
           staff_id?: string | null
           staff_name?: string | null
+          station?: string | null
         }
         Update: {
           created_at?: string
@@ -535,6 +537,7 @@ export type Database = {
           quantity?: number
           staff_id?: string | null
           staff_name?: string | null
+          station?: string | null
         }
         Relationships: [
           {
@@ -690,30 +693,36 @@ export type Database = {
           active: boolean
           created_at: string
           establishment_id: string
+          event_id: string | null
           id: string
           name: string
           pin: string
           role: Database["public"]["Enums"]["staff_role"]
+          station: string | null
           updated_at: string
         }
         Insert: {
           active?: boolean
           created_at?: string
           establishment_id: string
+          event_id?: string | null
           id?: string
           name: string
           pin: string
           role?: Database["public"]["Enums"]["staff_role"]
+          station?: string | null
           updated_at?: string
         }
         Update: {
           active?: boolean
           created_at?: string
           establishment_id?: string
+          event_id?: string | null
           id?: string
           name?: string
           pin?: string
           role?: Database["public"]["Enums"]["staff_role"]
+          station?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -722,6 +731,13 @@ export type Database = {
             columns: ["establishment_id"]
             isOneToOne: false
             referencedRelation: "establishments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "staff_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
             referencedColumns: ["id"]
           },
         ]

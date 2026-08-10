@@ -102,3 +102,30 @@ export const ownerSetItemStatus = createServerFn({ method: "POST" })
     });
     return { error: error ? error.message : null };
   });
+
+/** Marca um item como pronto usando o código do pedido (usado pelo console de retirada). */
+export const ownerSetItemStatusByCode = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { code: string; itemId: string; status?: string }) => ({
+    code: String(data.code).slice(0, 32),
+    itemId: String(data.itemId),
+    status: ["recebido", "preparando", "pronto", "entregue"].includes(String(data.status)) ? String(data.status) : "pronto",
+  }))
+  .handler(async ({ data, context }): Promise<{ error: string | null }> => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const supabase = context.supabase as any;
+    const { data: order, error: orderError } = await supabase
+      .from("orders")
+      .select("id")
+      .ilike("code", data.code)
+      .maybeSingle();
+    if (orderError) return { error: orderError.message };
+    if (!order) return { error: "Pedido não encontrado nesta conta." };
+
+    const { error } = await supabase.rpc("owner_set_order_status", {
+      p_order_id: order.id,
+      p_status: data.status,
+      p_item_id: data.itemId,
+    });
+    return { error: error ? error.message : null };
+  });
