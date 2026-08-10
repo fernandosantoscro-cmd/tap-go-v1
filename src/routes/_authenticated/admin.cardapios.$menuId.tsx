@@ -3,6 +3,7 @@ import { ArrowLeft, Download, Plus, RefreshCcw, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { MenuImportDialog } from "@/components/menu-import-dialog";
 import { QrCode } from "@/components/qr-code";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -212,7 +213,18 @@ function MenuDetail() {
       </section>
 
       <section className="rounded-2xl border bg-background p-6">
-        <h2 className="text-xl font-semibold">Produtos</h2>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-xl font-semibold">Produtos</h2>
+          <MenuImportDialog
+            menuId={menuId}
+            establishmentId={menu.data.establishment_id}
+            existingCategories={(categories.data ?? []).map((category) => ({ id: category.id, name: category.name }))}
+            onImported={() => {
+              void categories.refetch();
+              void products.refetch();
+            }}
+          />
+        </div>
         <form onSubmit={addProduct} className="mt-4 grid gap-4 md:grid-cols-3">
           <div>
             <Label htmlFor="p-name">Nome</Label>
