@@ -1,10 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, QrCode, ReceiptText, Timer, Wallet } from "lucide-react";
+import { ArrowRight, HelpCircle, QrCode, ReceiptText, Timer, Wallet } from "lucide-react";
 
+import { OnboardingDialog } from "@/components/onboarding-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatBRL, formatDateTime, ORDER_STATUS_LABEL } from "@/lib/format";
 import { useEstablishment, useMenus, useOrders } from "@/lib/admin-db";
+
 
 export const Route = createFileRoute("/_authenticated/admin/")({
   component: Overview,
