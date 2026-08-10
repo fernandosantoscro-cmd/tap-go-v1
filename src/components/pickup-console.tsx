@@ -1,6 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 import { CheckCircle2, Clock, Flame, Minus, Plus, RotateCcw } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { extractOrderCode, QrScanner } from "@/components/qr-scanner";
@@ -25,15 +25,20 @@ export interface PickupConsoleProps {
   onRegister: (code: string, items: { item_id: string; quantity: number }[]) => Promise<PickupResult>;
   /** Marca um item da cozinha como pronto (opcional). */
   onMarkReady?: (code: string, itemId: string) => Promise<{ error: string | null }>;
+  /** Abre um pedido vindo da fila, sem escanear. */
+  openRequest?: { code: string; nonce: number } | null;
+  /** Avisa o pai quando a retirada muda o pedido (para atualizar a fila). */
+  onChanged?: () => void;
 }
 
 /** Console de leitura e retirada usado pelo dono (painel) e pelo funcionário (balcão). */
-export function PickupConsole({ onLookup, onRegister, onMarkReady }: PickupConsoleProps) {
+export function PickupConsole({ onLookup, onRegister, onMarkReady, openRequest, onChanged }: PickupConsoleProps) {
   const [voucher, setVoucher] = useState<VoucherPayload | null>(null);
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [manualCode, setManualCode] = useState("");
   const [feedback, setFeedback] = useState<ScanFeedback>(null);
   const [frame, setFrame] = useState<"idle" | "success" | "error">("idle");
+
 
   function applyVoucher(data: VoucherPayload) {
     setVoucher(data);
@@ -83,6 +88,7 @@ export function PickupConsole({ onLookup, onRegister, onMarkReady }: PickupConso
         return;
       }
       const total = payload.items.reduce((sum, entry) => sum + entry.quantity, 0);
+      onChanged?.();
       setVoucher(result.voucher);
       setQuantities(Object.fromEntries(result.voucher.items.map((item) => [item.id, 0])));
       playScanCue("success");
@@ -103,6 +109,7 @@ export function PickupConsole({ onLookup, onRegister, onMarkReady }: PickupConso
       }),
     onSuccess: (result) => {
       if (result.voucher) applyVoucher(result.voucher);
+      onChanged?.();
       toast.success("Item marcado como pronto");
     },
     onError: (error: Error) => toast.error(error.message || "Falha ao marcar como pronto"),
@@ -116,6 +123,14 @@ export function PickupConsole({ onLookup, onRegister, onMarkReady }: PickupConso
     },
     [loadMutation],
   );
+
+  const lastOpenRef = useRef<number>(0);
+  useEffect(() => {
+    if (!openRequest || openRequest.nonce === lastOpenRef.current) return;
+    lastOpenRef.current = openRequest.nonce;
+    loadMutation.mutate(openRequest.code);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openRequest]);
 
   const totalSelected = Object.values(quantities).reduce((sum, quantity) => sum + quantity, 0);
   const allDelivered = voucher?.items.every((item) => item.available_quantity === 0) ?? false;

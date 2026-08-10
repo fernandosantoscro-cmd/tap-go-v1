@@ -98,3 +98,16 @@ export interface CartLine {
   product_id: string;
   quantity: number;
 }
+
+/** Pedido aberto exibido na fila de preparo do balcão. */
+export interface OpenOrder {
+  code: string;
+  status: OrderStatus;
+  total_cents: number;
+  paid_at: string | null;
+  created_at: string;
+  customer_name: string | null;
+  menu_name: string | null;
+  event_name: string | null;
+  items: VoucherItem[];
+}

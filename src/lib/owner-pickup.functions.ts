@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-import type { VoucherPayload } from "./tapgo-types";
+import type { OpenOrder, VoucherPayload } from "./tapgo-types";
 
 export interface OwnerVoucherResult {
   voucher: VoucherPayload | null;
@@ -128,4 +128,52 @@ export const ownerSetItemStatusByCode = createServerFn({ method: "POST" })
       p_item_id: data.itemId,
     });
     return { error: error ? error.message : null };
+  });
+
+/** Lista os pedidos pagos com itens pendentes do estabelecimento da conta logada. */
+export const ownerListOpenOrders = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<OpenOrder[]> => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const supabase = context.supabase as any;
+    const { data: rows, error } = await supabase
+      .from("orders")
+      .select(
+        "code, status, total_cents, paid_at, created_at, customer_name, menus(name), events(name), order_items(id, product_name, emoji, unit_price_cents, quantity, delivered_quantity, prep_minutes, requires_prep, status, created_at)",
+      )
+      .eq("payment_status", "pago")
+      .neq("status", "cancelado")
+      .order("paid_at", { ascending: true })
+      .limit(100);
+    if (error) throw new Error(error.message);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return ((rows ?? []) as any[])
+      .map((row) => ({
+        code: row.code as string,
+        status: row.status,
+        total_cents: row.total_cents as number,
+        paid_at: row.paid_at as string | null,
+        created_at: row.created_at as string,
+        customer_name: (row.customer_name ?? null) as string | null,
+        menu_name: (row.menus?.name ?? null) as string | null,
+        event_name: (row.events?.name ?? null) as string | null,
+        items: // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          ((row.order_items ?? []) as any[])
+            .slice()
+            .sort((a, b) => String(a.created_at).localeCompare(String(b.created_at)))
+            .map((item) => ({
+              id: item.id as string,
+              name: item.product_name as string,
+              emoji: (item.emoji ?? null) as string | null,
+              unit_price_cents: item.unit_price_cents as number,
+              quantity: item.quantity as number,
+              delivered_quantity: item.delivered_quantity as number,
+              available_quantity: (item.quantity as number) - (item.delivered_quantity as number),
+              prep_minutes: item.prep_minutes as number,
+              requires_prep: item.requires_prep as boolean,
+              status: item.status,
+            })),
+      }))
+      .filter((order) => order.items.some((item) => item.available_quantity > 0)) as OpenOrder[];
   });

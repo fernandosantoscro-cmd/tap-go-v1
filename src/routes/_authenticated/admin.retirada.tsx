@@ -1,11 +1,19 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { ExternalLink } from "lucide-react";
+import { useState } from "react";
 
+import { OrderQueue } from "@/components/order-queue";
 import { PickupConsole } from "@/components/pickup-console";
 import { Button } from "@/components/ui/button";
 import { useEstablishment } from "@/lib/admin-db";
-import { ownerFetchVoucher, ownerRegisterPickup, ownerSetItemStatusByCode } from "@/lib/owner-pickup.functions";
+import {
+  ownerFetchVoucher,
+  ownerListOpenOrders,
+  ownerRegisterPickup,
+  ownerSetItemStatusByCode,
+} from "@/lib/owner-pickup.functions";
 
 export const Route = createFileRoute("/_authenticated/admin/retirada")({
   component: PickupPage,
@@ -13,9 +21,12 @@ export const Route = createFileRoute("/_authenticated/admin/retirada")({
 
 function PickupPage() {
   const establishment = useEstablishment();
+  const queryClient = useQueryClient();
   const lookup = useServerFn(ownerFetchVoucher);
   const pickup = useServerFn(ownerRegisterPickup);
   const markReady = useServerFn(ownerSetItemStatusByCode);
+  const listOpen = useServerFn(ownerListOpenOrders);
+  const [openRequest, setOpenRequest] = useState<{ code: string; nonce: number } | null>(null);
 
   return (
     <div className="space-y-6">
@@ -23,7 +34,7 @@ function PickupPage() {
         <div>
           <h1 className="text-3xl font-semibold">Retirada</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Leia o QR Code do voucher pela câmera deste dispositivo. Sem PIN: usa a conta de{" "}
+            Libere cada produto na fila e depois leia o QR Code do voucher. Sem PIN: usa a conta de{" "}
             <strong>{establishment.data?.name ?? "seu estabelecimento"}</strong>.
           </p>
         </div>
@@ -40,10 +51,19 @@ function PickupPage() {
         </div>
       </header>
 
+      <OrderQueue
+        scope="owner"
+        onList={() => listOpen()}
+        onSetItemStatus={(code, itemId, status) => markReady({ data: { code, itemId, status } })}
+        onOpenOrder={(code) => setOpenRequest({ code, nonce: Date.now() })}
+      />
+
       <PickupConsole
         onLookup={(code) => lookup({ data: { code } })}
         onRegister={(code, items) => pickup({ data: { code, items } })}
         onMarkReady={(code, itemId) => markReady({ data: { code, itemId, status: "pronto" } })}
+        openRequest={openRequest}
+        onChanged={() => void queryClient.invalidateQueries({ queryKey: ["order-queue", "owner"] })}
       />
     </div>
   );

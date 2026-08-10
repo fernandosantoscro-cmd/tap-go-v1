@@ -789,6 +789,7 @@ export type Database = {
         Returns: Json
       }
       staff_login: { Args: { p_pin: string }; Returns: Json }
+      staff_open_orders: { Args: { p_pin: string }; Returns: Json }
       staff_set_status: {
         Args: {
           p_item_id?: string
