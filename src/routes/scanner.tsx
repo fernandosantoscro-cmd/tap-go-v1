@@ -47,11 +47,8 @@ function clearStaffStorage() {
 function ScannerPage() {
   const navigate = useNavigate();
   const search = Route.useSearch();
-  const pinFromUrl =
-    search.pin ??
-    (typeof window === "undefined"
-      ? undefined
-      : (new URLSearchParams(window.location.search).get("pin") ?? undefined)?.replace(/\D/g, "").slice(0, 6));
+  const pinFromUrl = search.pin ? String(search.pin).replace(/\D/g, "").slice(0, 6) : undefined;
+
 
 
   const login = useServerFn(staffLogin);
