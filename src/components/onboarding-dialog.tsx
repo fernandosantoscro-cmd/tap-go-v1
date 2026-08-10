@@ -232,11 +232,20 @@ export function OnboardingDialog() {
               <Button variant="ghost" onClick={() => setStep(2)}>
                 Voltar
               </Button>
-              <Button asChild onClick={finish}>
-                <Link to={firstMenu ? "/admin/cardapios/$menuId" : "/admin/cardapios"} params={{ menuId: firstMenu?.id ?? "" }}>
-                  Ir para o cardápio <ArrowRight className="ml-2 size-4" />
-                </Link>
-              </Button>
+              {firstMenu ? (
+                <Button asChild onClick={finish}>
+                  <Link to="/admin/cardapios/$menuId" params={{ menuId: firstMenu.id }}>
+                    Ir para o cardápio <ArrowRight className="ml-2 size-4" />
+                  </Link>
+                </Button>
+              ) : (
+                <Button asChild onClick={finish}>
+                  <Link to="/admin/cardapios">
+                    Ir para cardápios <ArrowRight className="ml-2 size-4" />
+                  </Link>
+                </Button>
+              )}
+
             </div>
           </div>
         )}
