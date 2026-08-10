@@ -52,12 +52,15 @@ function VoucherPage() {
   const initial = Route.useLoaderData() as VoucherPayload;
   const { code } = Route.useParams();
 
-  const { data } = useQuery({
+  const { data, refetch } = useQuery({
     queryKey: ["voucher", code],
     queryFn: () => fetchVoucher({ data: { code } }),
     initialData: initial,
-    refetchInterval: 3000,
+    refetchInterval: 15000,
   });
+
+  const { permission, enableAlerts } = useOrderRealtime(code, () => void refetch());
+
 
   const voucher = (data ?? initial) as VoucherPayload;
   const totalItems = voucher.items.reduce((sum, item) => sum + item.quantity, 0);
