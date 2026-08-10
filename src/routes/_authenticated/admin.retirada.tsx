@@ -43,12 +43,8 @@ function PickupPage() {
           <Button asChild variant="outline">
             <Link to="/admin/qrcodes">QR Codes dos estandes</Link>
           </Button>
-          <Button asChild variant="outline">
-            <a href="/scanner" target="_blank" rel="noreferrer">
-              Abrir em outro aparelho
-              <ExternalLink className="ml-2 size-4" />
-            </a>
-          </Button>
+          <StaffHandoffDialog />
+
         </div>
       </header>
 
