@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, notFound } from "@tanstack/react-router";
-import { CheckCircle2, Clock, Download, Flame, PartyPopper, Share2 } from "lucide-react";
+import { Bell, CheckCircle2, Clock, Download, Flame, PartyPopper, Share2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -12,7 +12,9 @@ import { formatBRL, ORDER_STATUS_LABEL } from "@/lib/format";
 import { downloadReceipt, shareReceipt } from "@/lib/receipt";
 import { fetchVoucher } from "@/lib/tapgo.functions";
 import type { VoucherItem, VoucherPayload } from "@/lib/tapgo-types";
+import { useOrderRealtime } from "@/lib/use-order-realtime";
 import { isReadyForPickup, kitchenItemLabel, splitVoucherItems } from "@/lib/voucher-groups";
+
 
 
 export const Route = createFileRoute("/voucher/$code")({
@@ -50,12 +52,15 @@ function VoucherPage() {
   const initial = Route.useLoaderData() as VoucherPayload;
   const { code } = Route.useParams();
 
-  const { data } = useQuery({
+  const { data, refetch } = useQuery({
     queryKey: ["voucher", code],
     queryFn: () => fetchVoucher({ data: { code } }),
     initialData: initial,
-    refetchInterval: 3000,
+    refetchInterval: 15000,
   });
+
+  const { permission, enableAlerts } = useOrderRealtime(code, () => void refetch());
+
 
   const voucher = (data ?? initial) as VoucherPayload;
   const totalItems = voucher.items.reduce((sum, item) => sum + item.quantity, 0);
@@ -142,6 +147,20 @@ function VoucherPage() {
       </header>
 
       <main className="mx-auto max-w-xl px-5 py-8">
+        {!complete && permission === "default" && (
+          <div className="mb-5 flex items-center justify-between gap-3 rounded-2xl border p-4">
+            <div>
+              <p className="font-medium">Avisar quando ficar pronto</p>
+              <p className="text-sm text-muted-foreground">
+                Receba um alerta na hora, mesmo com a tela desligada.
+              </p>
+            </div>
+            <Button size="sm" onClick={() => void enableAlerts()}>
+              <Bell className="mr-2 size-4" /> Ativar
+            </Button>
+          </div>
+        )}
+
         {!complete && readyNow.length > 0 && (
           <div className="mb-5 flex items-start gap-3 rounded-2xl border border-primary/40 bg-primary/10 p-4">
             <PartyPopper className="mt-0.5 size-5 text-primary" aria-hidden />
