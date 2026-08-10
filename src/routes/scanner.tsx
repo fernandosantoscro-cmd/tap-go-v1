@@ -82,6 +82,12 @@ function ScannerPage() {
   const [pinInput, setPinInput] = useState("");
   const [session, setSession] = useState<StaffSession | null>(null);
   const bootstrapped = useRef(false);
+  const [embedded, setEmbedded] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") setEmbedded(window.self !== window.top);
+  }, []);
+
 
 
   const loginMutation = useMutation({
