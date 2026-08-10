@@ -54,7 +54,7 @@ function VoucherPage() {
     queryKey: ["voucher", code],
     queryFn: () => fetchVoucher({ data: { code } }),
     initialData: initial,
-    refetchInterval: 5000,
+    refetchInterval: 3000,
   });
 
   const voucher = (data ?? initial) as VoucherPayload;
@@ -89,6 +89,8 @@ function VoucherPage() {
   }
 
   const { counter: counterItems, kitchen: kitchenItems } = splitVoucherItems(voucher);
+  const readyNow = voucher.items.filter((item) => item.available_quantity > 0 && isReadyForPickup(item));
+  const preparing = voucher.items.filter((item) => item.available_quantity > 0 && !isReadyForPickup(item));
 
   function renderItem(item: VoucherItem) {
     const done = item.available_quantity === 0;
@@ -140,6 +142,20 @@ function VoucherPage() {
       </header>
 
       <main className="mx-auto max-w-xl px-5 py-8">
+        {!complete && readyNow.length > 0 && (
+          <div className="mb-5 flex items-start gap-3 rounded-2xl border border-primary/40 bg-primary/10 p-4">
+            <PartyPopper className="mt-0.5 size-5 text-primary" aria-hidden />
+            <div>
+              <p className="font-medium">
+                {readyNow.length === 1 ? "Seu item está pronto" : `${readyNow.length} itens estão prontos`} — vá ao balcão
+              </p>
+              <p className="text-sm text-muted-foreground">
+                {readyNow.map((item) => item.name).join(", ")}
+                {preparing.length > 0 ? " · o restante ainda está em preparo." : ""}
+              </p>
+            </div>
+          </div>
+        )}
         <div className="rounded-3xl border p-6 text-center">
           <div className="flex justify-center">
             <QrCode value={voucherUrl} size={252} title={`QR Code do pedido ${voucher.order.code}`} />
