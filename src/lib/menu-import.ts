@@ -143,8 +143,8 @@ export function parseMenuCsv(text: string): ParseResult {
   if (lines.length < 2) return { rows: [], errors: ["Arquivo vazio ou sem linhas de produto"] };
 
   const header = lines[0];
-  const delimiter = (header.match(/;/g)?.length ?? 0) > (header.match(/,/g)?.length ?? 0) ? ";" : ",";
-  const keys = splitCsvLine(header, delimiter).map(normalizeKey);
+  const delimiter = (header?.match(/;/g)?.length ?? 0) > (header?.match(/,/g)?.length ?? 0) ? ";" : ",";
+  const keys = splitCsvLine(header ?? "", delimiter).map(normalizeKey);
 
   const rows: ImportedProduct[] = [];
   lines.slice(1).forEach((line, index) => {
