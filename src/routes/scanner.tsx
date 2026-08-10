@@ -1,18 +1,30 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { LogOut, ScanLine, ShieldCheck } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
+import { OrderQueue } from "@/components/order-queue";
 import { PickupConsole } from "@/components/pickup-console";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { STAFF_ROLE_LABEL } from "@/lib/format";
-import { ownerFetchVoucher, ownerRegisterPickup, ownerSetItemStatusByCode } from "@/lib/owner-pickup.functions";
-import { registerPickup, staffGetOrder, staffLogin, staffSetItemStatus } from "@/lib/tapgo.functions";
+import {
+  ownerFetchVoucher,
+  ownerListOpenOrders,
+  ownerRegisterPickup,
+  ownerSetItemStatusByCode,
+} from "@/lib/owner-pickup.functions";
+import {
+  registerPickup,
+  staffGetOrder,
+  staffListOpenOrders,
+  staffLogin,
+  staffSetItemStatus,
+} from "@/lib/tapgo.functions";
 import type { StaffSession } from "@/lib/tapgo-types";
 
 const PIN_KEY = "tapgo.staff.pin";
@@ -59,6 +71,10 @@ function ScannerPage() {
   const lookupOwner = useServerFn(ownerFetchVoucher);
   const pickupOwner = useServerFn(ownerRegisterPickup);
   const readyOwner = useServerFn(ownerSetItemStatusByCode);
+  const listOwner = useServerFn(ownerListOpenOrders);
+  const listStaff = useServerFn(staffListOpenOrders);
+  const queryClient = useQueryClient();
+  const [openRequest, setOpenRequest] = useState<{ code: string; nonce: number } | null>(null);
 
   const [mode, setMode] = useState<"loading" | "owner" | "pin" | "login">("loading");
   const [owner, setOwner] = useState<{ name: string } | null>(null);
@@ -246,22 +262,42 @@ function ScannerPage() {
         <p className="mt-1 text-sm text-muted-foreground">
           A câmera fica pausada enquanto um pedido está aberto. Cada voucher tem um código único.
         </p>
-        <div className="mt-6">
+        <div className="mt-6 space-y-6">
           {isOwner ? (
-            <PickupConsole
-              onLookup={(code) => lookupOwner({ data: { code } })}
-              onRegister={(code, items) => pickupOwner({ data: { code, items } })}
-              onMarkReady={(code, itemId) => readyOwner({ data: { code, itemId, status: "pronto" } })}
-            />
+            <>
+              <OrderQueue
+                scope="owner"
+                onList={() => listOwner()}
+                onSetItemStatus={(code, itemId, status) => readyOwner({ data: { code, itemId, status } })}
+                onOpenOrder={(code) => setOpenRequest({ code, nonce: Date.now() })}
+              />
+              <PickupConsole
+                onLookup={(code) => lookupOwner({ data: { code } })}
+                onRegister={(code, items) => pickupOwner({ data: { code, items } })}
+                onMarkReady={(code, itemId) => readyOwner({ data: { code, itemId, status: "pronto" } })}
+                openRequest={openRequest}
+                onChanged={() => void queryClient.invalidateQueries({ queryKey: ["order-queue", "owner"] })}
+              />
+            </>
           ) : (
-            <PickupConsole
-              onLookup={(code) => lookupStaff({ data: { pin, code } })}
-              onRegister={async (code, items) => {
-                const voucher = await pickupStaff({ data: { pin, code, items } });
-                return { voucher, error: voucher ? null : "Não foi possível registrar a retirada" };
-              }}
-              onMarkReady={(code, itemId) => readyStaff({ data: { pin, code, itemId, status: "pronto" } })}
-            />
+            <>
+              <OrderQueue
+                scope={`pin:${pin}`}
+                onList={() => listStaff({ data: { pin } })}
+                onSetItemStatus={(code, itemId, status) => readyStaff({ data: { pin, code, itemId, status } })}
+                onOpenOrder={(code) => setOpenRequest({ code, nonce: Date.now() })}
+              />
+              <PickupConsole
+                onLookup={(code) => lookupStaff({ data: { pin, code } })}
+                onRegister={async (code, items) => {
+                  const voucher = await pickupStaff({ data: { pin, code, items } });
+                  return { voucher, error: voucher ? null : "Não foi possível registrar a retirada" };
+                }}
+                onMarkReady={(code, itemId) => readyStaff({ data: { pin, code, itemId, status: "pronto" } })}
+                openRequest={openRequest}
+                onChanged={() => void queryClient.invalidateQueries({ queryKey: ["order-queue", `pin:${pin}`] })}
+              />
+            </>
           )}
         </div>
       </main>
