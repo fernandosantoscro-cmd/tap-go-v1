@@ -19,9 +19,11 @@ const PIN_KEY = "tapgo.staff.pin";
 const SESSION_KEY = "tapgo.staff.session";
 
 export const Route = createFileRoute("/scanner")({
-  validateSearch: (search: Record<string, unknown>) => ({
-    pin: typeof search["pin"] === "string" ? search["pin"].replace(/\D/g, "").slice(0, 6) : undefined,
-  }),
+  validateSearch: (search: Record<string, unknown>): { pin?: string } => {
+    const raw = typeof search["pin"] === "string" ? search["pin"].replace(/\D/g, "").slice(0, 6) : "";
+    return raw.length >= 4 ? { pin: raw } : {};
+  },
+
   head: () => ({
     meta: [
       { title: "Scanner do balcão — TapGo" },
