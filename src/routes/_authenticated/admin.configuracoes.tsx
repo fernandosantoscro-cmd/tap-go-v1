@@ -1,8 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Clock, Save, Store } from "lucide-react";
+import { Clock, MonitorDown, Save, Store } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
+import { InstallButton } from "@/components/install-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -236,6 +237,19 @@ function SettingsPage() {
         <Button className="mt-6" onClick={save} disabled={update.isPending}>
           <Save className="mr-2 size-4" /> {update.isPending ? "Salvando…" : "Salvar configurações"}
         </Button>
+      </section>
+
+      <section className="rounded-2xl border bg-background p-6">
+        <h2 className="flex items-center gap-2 text-xl font-semibold">
+          <MonitorDown className="size-5 text-primary" aria-hidden /> Aplicativo
+        </h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Instale o TapGo no computador ou no celular da equipe para abrir o painel e a retirada em
+          janela própria, sem abas do navegador.
+        </p>
+        <div className="mt-4">
+          <InstallButton variant="outline" label="Instalar o TapGo" />
+        </div>
       </section>
     </div>
   );
