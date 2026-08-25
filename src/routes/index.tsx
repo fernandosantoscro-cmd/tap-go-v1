@@ -5,7 +5,9 @@ import {
   BarChart3,
   Boxes,
   Clock,
+  Download,
   FileSpreadsheet,
+
   Layers,
   Menu,
   Moon,
@@ -22,6 +24,8 @@ import {
 
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
+import { useInstallPrompt } from "@/hooks/use-install-prompt";
+
 
 import heroImg from "@/assets/lp-hero.jpg";
 import filaImg from "@/assets/lp-fila.jpg";
@@ -187,11 +191,15 @@ function ThemeToggle() {
 
 function LandingHeader() {
   const [open, setOpen] = useState(false);
+  const { canInstall, platform, install } = useInstallPrompt();
 
   const handleNav = (href: string) => {
     setOpen(false);
     document.querySelector(href)?.scrollIntoView({ behavior: "smooth" });
   };
+
+  const installLabel = platform === "desktop" ? "Instalar no PC" : "Instalar app";
+
 
   return (
     <header className="sticky top-0 z-30 border-b bg-background/85 backdrop-blur">
@@ -215,9 +223,21 @@ function LandingHeader() {
 
         <div className="flex items-center gap-2">
           <ThemeToggle />
+          {canInstall && (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={install}
+              className="hidden lg:inline-flex"
+            >
+              <Download className="mr-2 size-4" />
+              {installLabel}
+            </Button>
+          )}
           <Button asChild size="sm" variant="outline" className="hidden sm:inline-flex">
             <Link to="/auth">Entrar</Link>
           </Button>
+
           <Button asChild size="sm" className="hidden sm:inline-flex">
             <Link to="/auth" search={{ mode: "signup" }}>
               Cadastrar
@@ -259,6 +279,13 @@ function LandingHeader() {
                 </Link>
               </Button>
             </div>
+            {canInstall && (
+              <Button size="sm" variant="ghost" onClick={install} className="mb-3 w-full">
+                <Download className="mr-2 size-4" />
+                {installLabel}
+              </Button>
+            )}
+
           </nav>
         </div>
       )}
