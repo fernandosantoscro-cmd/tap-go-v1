@@ -148,17 +148,28 @@ function VoucherPage() {
 
       <main className="mx-auto max-w-xl px-5 py-8">
         {!complete && permission === "default" && (
-          <div className="mb-5 flex items-center justify-between gap-3 rounded-2xl border p-4">
-            <div>
-              <p className="font-medium">Avisar quando ficar pronto</p>
-              <p className="text-sm text-muted-foreground">
-                Receba um alerta na hora, mesmo com a tela desligada.
-              </p>
+          <div className="mb-5 rounded-2xl border-2 border-primary/50 bg-primary/10 p-4">
+            <div className="flex items-start gap-3">
+              <Bell className="mt-0.5 size-5 text-primary" aria-hidden />
+              <div className="min-w-0 flex-1">
+                <p className="font-semibold">Quer ser avisado quando ficar pronto?</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Seu celular vibra, toca um alerta e mostra uma notificação assim que o balcão marcar cada item como
+                  pronto.
+                </p>
+                <Button className="mt-3 w-full sm:w-auto" onClick={() => void enableAlerts()}>
+                  <Bell className="mr-2 size-4" /> Ativar avisos
+                </Button>
+              </div>
             </div>
-            <Button size="sm" onClick={() => void enableAlerts()}>
-              <Bell className="mr-2 size-4" /> Ativar
-            </Button>
           </div>
+        )}
+
+        {!complete && (permission === "denied" || permission === "unsupported") && (
+          <p className="mb-5 rounded-2xl border p-4 text-sm text-muted-foreground">
+            As notificações estão bloqueadas neste navegador. Deixe esta tela aberta: o aviso de item pronto aparece
+            aqui com vibração e som.
+          </p>
         )}
 
         {!complete && readyNow.length > 0 && (
