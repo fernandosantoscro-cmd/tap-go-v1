@@ -59,7 +59,7 @@ function VoucherPage() {
     refetchInterval: 15000,
   });
 
-  const { permission, enableAlerts } = useOrderRealtime(code, () => void refetch());
+  const { permission, enableAlerts, readyAlert, dismissReady } = useOrderRealtime(code, () => void refetch());
 
 
   const voucher = (data ?? initial) as VoucherPayload;
