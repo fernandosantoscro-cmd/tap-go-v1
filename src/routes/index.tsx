@@ -187,11 +187,15 @@ function ThemeToggle() {
 
 function LandingHeader() {
   const [open, setOpen] = useState(false);
+  const { canInstall, platform, install } = useInstallPrompt();
 
   const handleNav = (href: string) => {
     setOpen(false);
     document.querySelector(href)?.scrollIntoView({ behavior: "smooth" });
   };
+
+  const installLabel = platform === "desktop" ? "Instalar no PC" : "Instalar app";
+
 
   return (
     <header className="sticky top-0 z-30 border-b bg-background/85 backdrop-blur">
