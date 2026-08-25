@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import {
   ArrowRight,
   BarChart3,
@@ -6,13 +7,17 @@ import {
   Clock,
   FileSpreadsheet,
   Layers,
+  Menu,
+  Moon,
   QrCode as QrCodeIcon,
   ScanLine,
   Smartphone,
+  Sun,
   Timer,
   TrendingUp,
   Users,
   Wallet,
+  X,
 } from "lucide-react";
 
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
