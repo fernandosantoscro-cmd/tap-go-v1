@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import {
   ArrowRight,
   BarChart3,
@@ -6,13 +7,17 @@ import {
   Clock,
   FileSpreadsheet,
   Layers,
+  Menu,
+  Moon,
   QrCode as QrCodeIcon,
   ScanLine,
   Smartphone,
+  Sun,
   Timer,
   TrendingUp,
   Users,
   Wallet,
+  X,
 } from "lucide-react";
 
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -136,6 +141,121 @@ const steps = [
   },
 ];
 
+const navLinks = [
+  { href: "#como-funciona", label: "Como funciona" },
+  { href: "#beneficios", label: "Benefícios" },
+  { href: "#publico", label: "Para quem é" },
+  { href: "#faq", label: "FAQ" },
+];
+
+function useThemeToggle() {
+  const [theme, setTheme] = useState<"light" | "dark">("light");
+
+  useEffect(() => {
+    const stored = localStorage.getItem("tapgo.theme");
+    const initial = stored === "dark" ? "dark" : "light";
+    setTheme(initial);
+    document.documentElement.classList.toggle("dark", initial === "dark");
+  }, []);
+
+  const toggle = () => {
+    setTheme((prev) => {
+      const next = prev === "dark" ? "light" : "dark";
+      localStorage.setItem("tapgo.theme", next);
+      document.documentElement.classList.toggle("dark", next === "dark");
+      return next;
+    });
+  };
+
+  return { theme, toggle };
+}
+
+function ThemeToggle() {
+  const { theme, toggle } = useThemeToggle();
+  const isDark = theme === "dark";
+  return (
+    <button
+      type="button"
+      onClick={toggle}
+      aria-label={isDark ? "Ativar modo claro" : "Ativar modo escuro"}
+      className="inline-flex size-9 items-center justify-center rounded-md border border-border text-foreground transition-colors hover:bg-accent"
+    >
+      {isDark ? <Sun className="size-4" /> : <Moon className="size-4" />}
+    </button>
+  );
+}
+
+function LandingHeader() {
+  const [open, setOpen] = useState(false);
+
+  const handleNav = (href: string) => {
+    setOpen(false);
+    document.querySelector(href)?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  return (
+    <header className="sticky top-0 z-30 border-b bg-background/85 backdrop-blur">
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+        <a href="#inicio" className="font-display text-xl font-semibold tracking-tight">
+          Tap<span className="text-primary">Go</span>
+        </a>
+
+        <nav className="hidden items-center gap-6 md:flex">
+          {navLinks.map((item) => (
+            <button
+              key={item.href}
+              type="button"
+              onClick={() => handleNav(item.href)}
+              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
+              {item.label}
+            </button>
+          ))}
+        </nav>
+
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <Button asChild size="sm" className="hidden sm:inline-flex">
+            <Link to="/auth">Entrar</Link>
+          </Button>
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
+            aria-label={open ? "Fechar menu" : "Abrir menu"}
+            aria-expanded={open}
+            className="inline-flex size-9 items-center justify-center rounded-md border border-border text-foreground transition-colors hover:bg-accent md:hidden"
+          >
+            {open ? <X className="size-4" /> : <Menu className="size-4" />}
+          </button>
+        </div>
+      </div>
+
+      {open && (
+        <div className="border-t bg-background md:hidden">
+          <nav className="mx-auto flex max-w-6xl flex-col px-6 py-2">
+            {navLinks.map((item) => (
+              <button
+                key={item.href}
+                type="button"
+                onClick={() => handleNav(item.href)}
+                className="border-b border-border py-3 text-left text-sm text-foreground last:border-0"
+              >
+                {item.label}
+              </button>
+            ))}
+            <Button asChild size="sm" className="my-3">
+              <Link to="/auth">
+                Entrar
+                <ArrowRight className="ml-2 size-4" />
+              </Link>
+            </Button>
+          </nav>
+        </div>
+      )}
+    </header>
+  );
+}
+
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
@@ -177,22 +297,11 @@ export const Route = createFileRoute("/")({
 function Landing() {
   return (
     <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-30 border-b bg-background/85 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <span className="font-display text-xl font-semibold tracking-tight">
-            Tap<span className="text-primary">Go</span>
-          </span>
-          <nav className="flex items-center gap-2">
-            <Button asChild size="sm">
-              <Link to="/auth">Entrar</Link>
-            </Button>
-          </nav>
-        </div>
-      </header>
+      <LandingHeader />
 
       <main>
         {/* Hero */}
-        <section className="mx-auto max-w-6xl px-6 pb-16 pt-14 md:pt-20">
+        <section id="inicio" className="mx-auto max-w-6xl px-6 pb-16 pt-14 md:pt-20">
           <div className="grid items-center gap-12 lg:grid-cols-[1.05fr_1fr]">
             <div>
               <p className="mb-6 inline-flex items-center rounded-full border px-3 py-1 text-xs tracking-wide text-muted-foreground">
@@ -287,7 +396,7 @@ function Landing() {
         </section>
 
         {/* Como funciona */}
-        <section className="border-t bg-secondary/40">
+        <section id="como-funciona" className="border-t bg-secondary/40">
           <div className="mx-auto max-w-6xl px-6 py-20">
             <p className="text-sm font-medium tracking-wide text-primary">Como funciona</p>
             <h2 className="mt-3 max-w-2xl text-3xl font-semibold md:text-4xl">
@@ -318,7 +427,7 @@ function Landing() {
         </section>
 
         {/* Benefícios B2B */}
-        <section className="mx-auto max-w-6xl px-6 py-20">
+        <section id="beneficios" className="mx-auto max-w-6xl px-6 py-20">
           <p className="text-sm font-medium tracking-wide text-primary">Para o seu negócio</p>
           <h2 className="mt-3 max-w-2xl text-3xl font-semibold md:text-4xl">
             Vender mais no mesmo espaço, com a mesma equipe.
@@ -369,7 +478,7 @@ function Landing() {
         </section>
 
         {/* Para quem é */}
-        <section className="mx-auto max-w-6xl px-6 py-20">
+        <section id="publico" className="mx-auto max-w-6xl px-6 py-20">
           <h2 className="text-3xl font-semibold md:text-4xl">Feito para operações de pico.</h2>
           <div className="mt-10 grid gap-10 lg:grid-cols-[1fr_1.1fr] lg:items-center">
             <div className="overflow-hidden rounded-2xl border">
@@ -437,7 +546,7 @@ function Landing() {
         </section>
 
         {/* FAQ */}
-        <section className="mx-auto max-w-3xl px-6 py-20">
+        <section id="faq" className="mx-auto max-w-3xl px-6 py-20">
           <h2 className="text-3xl font-semibold md:text-4xl">Perguntas frequentes</h2>
           <Accordion type="single" collapsible className="mt-8">
             {faq.map((item) => (
