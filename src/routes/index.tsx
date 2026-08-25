@@ -297,18 +297,7 @@ export const Route = createFileRoute("/")({
 function Landing() {
   return (
     <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-30 border-b bg-background/85 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <span className="font-display text-xl font-semibold tracking-tight">
-            Tap<span className="text-primary">Go</span>
-          </span>
-          <nav className="flex items-center gap-2">
-            <Button asChild size="sm">
-              <Link to="/auth">Entrar</Link>
-            </Button>
-          </nav>
-        </div>
-      </header>
+      <LandingHeader />
 
       <main>
         {/* Hero */}
