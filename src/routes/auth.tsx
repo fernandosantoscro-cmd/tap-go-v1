@@ -13,9 +13,10 @@ import { SIGNUP_KEY } from "@/lib/admin-db";
 
 
 export const Route = createFileRoute("/auth")({
-  validateSearch: (search: Record<string, unknown>) => ({
-    mode: (search["mode"] === "signup" ? "signup" : "login") as "login" | "signup",
-  }),
+  validateSearch: (search: Record<string, unknown>): { mode?: "login" | "signup" } => {
+    const m = search["mode"];
+    return { mode: m === "signup" || m === "login" ? (m as "login" | "signup") : undefined };
+  },
   head: () => ({
     meta: [
       { title: "Entrar no painel — TapGo" },
