@@ -191,15 +191,11 @@ function ThemeToggle() {
 
 function LandingHeader() {
   const [open, setOpen] = useState(false);
-  const { canInstall, platform, install } = useInstallPrompt();
 
   const handleNav = (href: string) => {
     setOpen(false);
     document.querySelector(href)?.scrollIntoView({ behavior: "smooth" });
   };
-
-  const installLabel = platform === "desktop" ? "Instalar no PC" : "Instalar app";
-
 
   return (
     <header className="sticky top-0 z-30 border-b bg-background/85 backdrop-blur">
@@ -223,17 +219,7 @@ function LandingHeader() {
 
         <div className="flex items-center gap-2">
           <ThemeToggle />
-          {canInstall && (
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={install}
-              className="hidden lg:inline-flex"
-            >
-              <Download className="mr-2 size-4" />
-              {installLabel}
-            </Button>
-          )}
+          <InstallButton className="hidden sm:inline-flex" />
           <Button asChild size="sm" variant="outline" className="hidden sm:inline-flex">
             <Link to="/auth">Entrar</Link>
           </Button>
@@ -268,7 +254,8 @@ function LandingHeader() {
                 {item.label}
               </button>
             ))}
-            <div className="my-3 flex gap-2">
+            <InstallButton className="my-3 w-full" />
+            <div className="mb-3 flex gap-2">
               <Button asChild size="sm" variant="outline" className="flex-1">
                 <Link to="/auth">Entrar</Link>
               </Button>
@@ -279,13 +266,6 @@ function LandingHeader() {
                 </Link>
               </Button>
             </div>
-            {canInstall && (
-              <Button size="sm" variant="ghost" onClick={install} className="mb-3 w-full">
-                <Download className="mr-2 size-4" />
-                {installLabel}
-              </Button>
-            )}
-
           </nav>
         </div>
       )}
