@@ -23,7 +23,7 @@ import {
 
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
-import { InstallButton } from "@/components/install-button";
+
 
 
 import heroImg from "@/assets/lp-hero.jpg";
@@ -218,7 +218,7 @@ function LandingHeader() {
 
         <div className="flex items-center gap-2">
           <ThemeToggle />
-          <InstallButton className="hidden sm:inline-flex" />
+          
           <Button asChild size="sm" variant="outline" className="hidden sm:inline-flex">
             <Link to="/auth">Entrar</Link>
           </Button>
@@ -253,7 +253,7 @@ function LandingHeader() {
                 {item.label}
               </button>
             ))}
-            <InstallButton className="my-3 w-full" />
+            
             <div className="mb-3 flex gap-2">
               <Button asChild size="sm" variant="outline" className="flex-1">
                 <Link to="/auth">Entrar</Link>
