@@ -153,7 +153,7 @@ function useThemeToggle() {
 
   useEffect(() => {
     const stored = localStorage.getItem("tapgo.theme");
-    const initial = stored === "dark" ? "dark" : "light";
+    const initial = stored === "light" ? "light" : "dark";
     setTheme(initial);
     document.documentElement.classList.toggle("dark", initial === "dark");
   }, []);
