@@ -13,7 +13,7 @@ import { SIGNUP_KEY } from "@/lib/admin-db";
 
 
 export const Route = createFileRoute("/auth")({
-  validateSearch: (search: Record<string, unknown>): { mode?: "login" | "signup" } => {
+  validateSearch: (search: Record<string, unknown>): { mode?: "login" | "signup" | undefined } => {
     const m = search["mode"];
     return { mode: m === "signup" || m === "login" ? (m as "login" | "signup") : undefined };
   },
@@ -34,7 +34,7 @@ export const Route = createFileRoute("/auth")({
 function AuthPage() {
   const navigate = useNavigate();
   const search = useSearch({ from: "/auth" });
-  const [mode, setMode] = useState<"login" | "signup">(search.mode);
+  const [mode, setMode] = useState<"login" | "signup">(search.mode ?? "login");
   const [name, setName] = useState("");
   const [type, setType] = useState("bar");
   const [phone, setPhone] = useState("");
