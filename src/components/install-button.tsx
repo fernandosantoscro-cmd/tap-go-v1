@@ -13,13 +13,21 @@ import { useInstallPrompt } from "@/hooks/use-install-prompt";
 
 const PUBLISHED_URL = "https://instant-retire.lovable.app";
 
-export function InstallButton({ className }: { className?: string }) {
+export function InstallButton({
+  className,
+  variant = "default",
+  label: labelOverride,
+}: {
+  className?: string;
+  variant?: "default" | "outline" | "secondary" | "ghost";
+  label?: string;
+}) {
   const { platform, canInstall, install, installed } = useInstallPrompt();
   const [open, setOpen] = useState(false);
 
   if (installed) return null;
 
-  const label = platform === "desktop" ? "Instalar no PC" : "Instalar app";
+  const label = labelOverride ?? (platform === "desktop" ? "Instalar no PC" : "Instalar app");
 
   const handleClick = async () => {
     if (canInstall) {
@@ -35,12 +43,14 @@ export function InstallButton({ className }: { className?: string }) {
       <Button
         type="button"
         size="sm"
+        variant={variant}
         onClick={handleClick}
-        className={`gap-2 bg-primary text-primary-foreground hover:bg-primary/90 ${className ?? ""}`}
+        className={`gap-2 ${className ?? ""}`}
       >
         <Download className="size-4" />
         {label}
       </Button>
+
 
       <DialogContent className="max-w-md">
         <DialogHeader>
