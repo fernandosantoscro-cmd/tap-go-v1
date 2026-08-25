@@ -301,7 +301,7 @@ function Landing() {
 
       <main>
         {/* Hero */}
-        <section className="mx-auto max-w-6xl px-6 pb-16 pt-14 md:pt-20">
+        <section id="inicio" className="mx-auto max-w-6xl px-6 pb-16 pt-14 md:pt-20">
           <div className="grid items-center gap-12 lg:grid-cols-[1.05fr_1fr]">
             <div>
               <p className="mb-6 inline-flex items-center rounded-full border px-3 py-1 text-xs tracking-wide text-muted-foreground">
@@ -396,7 +396,7 @@ function Landing() {
         </section>
 
         {/* Como funciona */}
-        <section className="border-t bg-secondary/40">
+        <section id="como-funciona" className="border-t bg-secondary/40">
           <div className="mx-auto max-w-6xl px-6 py-20">
             <p className="text-sm font-medium tracking-wide text-primary">Como funciona</p>
             <h2 className="mt-3 max-w-2xl text-3xl font-semibold md:text-4xl">
@@ -427,7 +427,7 @@ function Landing() {
         </section>
 
         {/* Benefícios B2B */}
-        <section className="mx-auto max-w-6xl px-6 py-20">
+        <section id="beneficios" className="mx-auto max-w-6xl px-6 py-20">
           <p className="text-sm font-medium tracking-wide text-primary">Para o seu negócio</p>
           <h2 className="mt-3 max-w-2xl text-3xl font-semibold md:text-4xl">
             Vender mais no mesmo espaço, com a mesma equipe.
@@ -478,7 +478,7 @@ function Landing() {
         </section>
 
         {/* Para quem é */}
-        <section className="mx-auto max-w-6xl px-6 py-20">
+        <section id="publico" className="mx-auto max-w-6xl px-6 py-20">
           <h2 className="text-3xl font-semibold md:text-4xl">Feito para operações de pico.</h2>
           <div className="mt-10 grid gap-10 lg:grid-cols-[1fr_1.1fr] lg:items-center">
             <div className="overflow-hidden rounded-2xl border">
@@ -546,7 +546,7 @@ function Landing() {
         </section>
 
         {/* FAQ */}
-        <section className="mx-auto max-w-3xl px-6 py-20">
+        <section id="faq" className="mx-auto max-w-3xl px-6 py-20">
           <h2 className="text-3xl font-semibold md:text-4xl">Perguntas frequentes</h2>
           <Accordion type="single" collapsible className="mt-8">
             {faq.map((item) => (
