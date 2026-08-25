@@ -22,6 +22,8 @@ import {
 
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
+import { useInstallPrompt } from "@/hooks/use-install-prompt";
+
 
 import heroImg from "@/assets/lp-hero.jpg";
 import filaImg from "@/assets/lp-fila.jpg";
@@ -219,9 +221,21 @@ function LandingHeader() {
 
         <div className="flex items-center gap-2">
           <ThemeToggle />
+          {canInstall && (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={install}
+              className="hidden lg:inline-flex"
+            >
+              <Download className="mr-2 size-4" />
+              {installLabel}
+            </Button>
+          )}
           <Button asChild size="sm" variant="outline" className="hidden sm:inline-flex">
             <Link to="/auth">Entrar</Link>
           </Button>
+
           <Button asChild size="sm" className="hidden sm:inline-flex">
             <Link to="/auth" search={{ mode: "signup" }}>
               Cadastrar
