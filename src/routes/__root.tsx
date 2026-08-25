@@ -12,6 +12,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "@/components/ui/sonner";
+import { InstallPrompt } from "@/components/install-prompt";
 
 function NotFoundComponent() {
   return (
@@ -85,6 +86,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           "TapGo digitaliza o consumo em eventos: o cliente pede e paga pelo celular e retira com um único QR Code.",
       },
       { name: "theme-color", content: "#FFC400" },
+      { name: "mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
+      { name: "apple-mobile-web-app-title", content: "TapGo" },
+      { name: "application-name", content: "TapGo" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -143,6 +149,7 @@ function RootComponent() {
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
       <Toaster position="top-center" />
+      <InstallPrompt />
     </QueryClientProvider>
   );
 }
