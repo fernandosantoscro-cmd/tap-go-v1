@@ -59,7 +59,7 @@ function VoucherPage() {
     refetchInterval: 15000,
   });
 
-  const { permission, enableAlerts } = useOrderRealtime(code, () => void refetch());
+  const { permission, enableAlerts, readyAlert, dismissReady } = useOrderRealtime(code, () => void refetch());
 
 
   const voucher = (data ?? initial) as VoucherPayload;
@@ -130,6 +130,22 @@ function VoucherPage() {
 
   return (
     <div className="min-h-screen bg-background pb-16">
+      {readyAlert && (
+        <div
+          role="alertdialog"
+          aria-live="assertive"
+          className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-primary px-8 text-center text-primary-foreground animate-fade-in"
+        >
+          <PartyPopper className="size-16 animate-scale-in" aria-hidden />
+          <p className="text-3xl font-semibold leading-tight">{readyAlert.itemName} está pronto!</p>
+          <p className="text-base opacity-80">
+            Vá ao balcão e mostre o QR Code do pedido {voucher.order.code}.
+          </p>
+          <Button variant="secondary" size="lg" className="mt-2" onClick={dismissReady}>
+            Ver QR de retirada
+          </Button>
+        </div>
+      )}
       <header className="border-b bg-secondary/50">
         <div className="mx-auto max-w-xl px-5 py-6 text-center">
           <p className="text-xs uppercase tracking-widest text-muted-foreground">
@@ -148,17 +164,28 @@ function VoucherPage() {
 
       <main className="mx-auto max-w-xl px-5 py-8">
         {!complete && permission === "default" && (
-          <div className="mb-5 flex items-center justify-between gap-3 rounded-2xl border p-4">
-            <div>
-              <p className="font-medium">Avisar quando ficar pronto</p>
-              <p className="text-sm text-muted-foreground">
-                Receba um alerta na hora, mesmo com a tela desligada.
-              </p>
+          <div className="mb-5 rounded-2xl border-2 border-primary/50 bg-primary/10 p-4">
+            <div className="flex items-start gap-3">
+              <Bell className="mt-0.5 size-5 text-primary" aria-hidden />
+              <div className="min-w-0 flex-1">
+                <p className="font-semibold">Quer ser avisado quando ficar pronto?</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Seu celular vibra, toca um alerta e mostra uma notificação assim que o balcão marcar cada item como
+                  pronto.
+                </p>
+                <Button className="mt-3 w-full sm:w-auto" onClick={() => void enableAlerts()}>
+                  <Bell className="mr-2 size-4" /> Ativar avisos
+                </Button>
+              </div>
             </div>
-            <Button size="sm" onClick={() => void enableAlerts()}>
-              <Bell className="mr-2 size-4" /> Ativar
-            </Button>
           </div>
+        )}
+
+        {!complete && (permission === "denied" || permission === "unsupported") && (
+          <p className="mb-5 rounded-2xl border p-4 text-sm text-muted-foreground">
+            As notificações estão bloqueadas neste navegador. Deixe esta tela aberta: o aviso de item pronto aparece
+            aqui com vibração e som.
+          </p>
         )}
 
         {!complete && readyNow.length > 0 && (
