@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -13,6 +13,9 @@ import { SIGNUP_KEY } from "@/lib/admin-db";
 
 
 export const Route = createFileRoute("/auth")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    mode: (search["mode"] === "signup" ? "signup" : "login") as "login" | "signup",
+  }),
   head: () => ({
     meta: [
       { title: "Entrar no painel — TapGo" },
@@ -29,7 +32,8 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const navigate = useNavigate();
-  const [mode, setMode] = useState<"login" | "signup">("login");
+  const search = useSearch({ from: "/auth" });
+  const [mode, setMode] = useState<"login" | "signup">(search.mode);
   const [name, setName] = useState("");
   const [type, setType] = useState("bar");
   const [phone, setPhone] = useState("");
