@@ -14,7 +14,7 @@ import { useInstallPrompt } from "@/hooks/use-install-prompt";
 const PUBLISHED_URL = "https://instant-retire.lovable.app";
 
 export function InstallButton({ className }: { className?: string }) {
-  const { platform, canInstall, needsManualSteps, install, installed } = useInstallPrompt();
+  const { platform, canInstall, install, installed } = useInstallPrompt();
   const [open, setOpen] = useState(false);
 
   if (installed) return null;
