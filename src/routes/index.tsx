@@ -141,6 +141,121 @@ const steps = [
   },
 ];
 
+const navLinks = [
+  { href: "#como-funciona", label: "Como funciona" },
+  { href: "#beneficios", label: "Benefícios" },
+  { href: "#publico", label: "Para quem é" },
+  { href: "#faq", label: "FAQ" },
+];
+
+function useThemeToggle() {
+  const [theme, setTheme] = useState<"light" | "dark">("light");
+
+  useEffect(() => {
+    const stored = localStorage.getItem("tapgo.theme");
+    const initial = stored === "dark" ? "dark" : "light";
+    setTheme(initial);
+    document.documentElement.classList.toggle("dark", initial === "dark");
+  }, []);
+
+  const toggle = () => {
+    setTheme((prev) => {
+      const next = prev === "dark" ? "light" : "dark";
+      localStorage.setItem("tapgo.theme", next);
+      document.documentElement.classList.toggle("dark", next === "dark");
+      return next;
+    });
+  };
+
+  return { theme, toggle };
+}
+
+function ThemeToggle() {
+  const { theme, toggle } = useThemeToggle();
+  const isDark = theme === "dark";
+  return (
+    <button
+      type="button"
+      onClick={toggle}
+      aria-label={isDark ? "Ativar modo claro" : "Ativar modo escuro"}
+      className="inline-flex size-9 items-center justify-center rounded-md border border-border text-foreground transition-colors hover:bg-accent"
+    >
+      {isDark ? <Sun className="size-4" /> : <Moon className="size-4" />}
+    </button>
+  );
+}
+
+function LandingHeader() {
+  const [open, setOpen] = useState(false);
+
+  const handleNav = (href: string) => {
+    setOpen(false);
+    document.querySelector(href)?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  return (
+    <header className="sticky top-0 z-30 border-b bg-background/85 backdrop-blur">
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+        <a href="#inicio" className="font-display text-xl font-semibold tracking-tight">
+          Tap<span className="text-primary">Go</span>
+        </a>
+
+        <nav className="hidden items-center gap-6 md:flex">
+          {navLinks.map((item) => (
+            <button
+              key={item.href}
+              type="button"
+              onClick={() => handleNav(item.href)}
+              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
+              {item.label}
+            </button>
+          ))}
+        </nav>
+
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <Button asChild size="sm" className="hidden sm:inline-flex">
+            <Link to="/auth">Entrar</Link>
+          </Button>
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
+            aria-label={open ? "Fechar menu" : "Abrir menu"}
+            aria-expanded={open}
+            className="inline-flex size-9 items-center justify-center rounded-md border border-border text-foreground transition-colors hover:bg-accent md:hidden"
+          >
+            {open ? <X className="size-4" /> : <Menu className="size-4" />}
+          </button>
+        </div>
+      </div>
+
+      {open && (
+        <div className="border-t bg-background md:hidden">
+          <nav className="mx-auto flex max-w-6xl flex-col px-6 py-2">
+            {navLinks.map((item) => (
+              <button
+                key={item.href}
+                type="button"
+                onClick={() => handleNav(item.href)}
+                className="border-b border-border py-3 text-left text-sm text-foreground last:border-0"
+              >
+                {item.label}
+              </button>
+            ))}
+            <Button asChild size="sm" className="my-3">
+              <Link to="/auth">
+                Entrar
+                <ArrowRight className="ml-2 size-4" />
+              </Link>
+            </Button>
+          </nav>
+        </div>
+      )}
+    </header>
+  );
+}
+
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
