@@ -279,6 +279,13 @@ function LandingHeader() {
                 </Link>
               </Button>
             </div>
+            {canInstall && (
+              <Button size="sm" variant="ghost" onClick={install} className="mb-3 w-full">
+                <Download className="mr-2 size-4" />
+                {installLabel}
+              </Button>
+            )}
+
           </nav>
         </div>
       )}
