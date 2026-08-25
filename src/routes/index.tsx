@@ -215,8 +215,13 @@ function LandingHeader() {
 
         <div className="flex items-center gap-2">
           <ThemeToggle />
-          <Button asChild size="sm" className="hidden sm:inline-flex">
+          <Button asChild size="sm" variant="outline" className="hidden sm:inline-flex">
             <Link to="/auth">Entrar</Link>
+          </Button>
+          <Button asChild size="sm" className="hidden sm:inline-flex">
+            <Link to="/auth" search={{ mode: "signup" }}>
+              Cadastrar
+            </Link>
           </Button>
           <button
             type="button"
@@ -243,12 +248,17 @@ function LandingHeader() {
                 {item.label}
               </button>
             ))}
-            <Button asChild size="sm" className="my-3">
-              <Link to="/auth">
-                Entrar
-                <ArrowRight className="ml-2 size-4" />
-              </Link>
-            </Button>
+            <div className="my-3 flex gap-2">
+              <Button asChild size="sm" variant="outline" className="flex-1">
+                <Link to="/auth">Entrar</Link>
+              </Button>
+              <Button asChild size="sm" className="flex-1">
+                <Link to="/auth" search={{ mode: "signup" }}>
+                  Cadastrar
+                  <ArrowRight className="ml-2 size-4" />
+                </Link>
+              </Button>
+            </div>
           </nav>
         </div>
       )}
@@ -316,10 +326,13 @@ function Landing() {
               </p>
               <div className="mt-9 flex flex-wrap gap-3">
                 <Button asChild size="lg" className="tap-target">
-                  <Link to="/auth">
-                    Entrar
+                  <Link to="/auth" search={{ mode: "signup" }}>
+                    Cadastrar meu estabelecimento
                     <ArrowRight className="ml-2 size-4" />
                   </Link>
+                </Button>
+                <Button asChild size="lg" variant="outline" className="tap-target">
+                  <Link to="/auth">Entrar</Link>
                 </Button>
               </div>
               <p className="mt-4 text-xs text-muted-foreground">
@@ -570,10 +583,13 @@ function Landing() {
             </div>
             <div className="flex flex-wrap gap-3">
               <Button asChild size="lg" variant="secondary" className="tap-target">
-                <Link to="/auth">
-                  Entrar
+                <Link to="/auth" search={{ mode: "signup" }}>
+                  Cadastrar
                   <ArrowRight className="ml-2 size-4" />
                 </Link>
+              </Button>
+              <Button asChild size="lg" variant="outline" className="tap-target bg-transparent text-primary-foreground border-primary-foreground/40 hover:bg-primary-foreground/10 hover:text-primary-foreground">
+                <Link to="/auth">Entrar</Link>
               </Button>
             </div>
           </div>
