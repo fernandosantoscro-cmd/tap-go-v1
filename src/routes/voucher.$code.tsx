@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, notFound } from "@tanstack/react-router";
-import { Bell, CheckCircle2, Clock, Download, Flame, PartyPopper, Share2 } from "lucide-react";
-import { useState } from "react";
+import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { Bell, CheckCircle2, Clock, Download, Flame, ListOrdered, PartyPopper, Share2 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { QrCode } from "@/components/qr-code";
@@ -9,11 +9,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { formatBRL, ORDER_STATUS_LABEL } from "@/lib/format";
+import { rememberOrder } from "@/lib/my-orders";
 import { downloadReceipt, shareReceipt } from "@/lib/receipt";
 import { fetchVoucher } from "@/lib/tapgo.functions";
 import type { VoucherItem, VoucherPayload } from "@/lib/tapgo-types";
 import { useOrderRealtime } from "@/lib/use-order-realtime";
-import { isReadyForPickup, kitchenItemLabel, splitVoucherItems } from "@/lib/voucher-groups";
+import { kitchenItemLabel, splitVoucherItems } from "@/lib/voucher-groups";
 
 
 
@@ -61,9 +62,21 @@ function VoucherPage() {
 
   const { permission, enableAlerts, readyAlert, dismissReady } = useOrderRealtime(code, () => void refetch());
 
+  useEffect(() => {
+    if (!initial?.order) return;
+    rememberOrder({
+      code: initial.order.code,
+      establishment: initial.establishment?.name ?? null,
+      total_cents: initial.order.total_cents,
+      created_at: initial.order.created_at,
+    });
+  }, [initial]);
+
 
   const voucher = (data ?? initial) as VoucherPayload;
   const totalItems = voucher.items.reduce((sum, item) => sum + item.quantity, 0);
+  const readyItems = voucher.items.reduce((sum, item) => sum + item.available_quantity, 0);
+  const preparingItems = voucher.items.reduce((sum, item) => sum + item.preparing_quantity, 0);
   const deliveredItems = voucher.items.reduce((sum, item) => sum + item.delivered_quantity, 0);
   const complete = deliveredItems >= totalItems;
   const voucherUrl =
@@ -94,23 +107,25 @@ function VoucherPage() {
   }
 
   const { counter: counterItems, kitchen: kitchenItems } = splitVoucherItems(voucher);
-  const readyNow = voucher.items.filter((item) => item.available_quantity > 0 && isReadyForPickup(item));
-  const preparing = voucher.items.filter((item) => item.available_quantity > 0 && !isReadyForPickup(item));
+  const readyNow = voucher.items.filter((item) => item.available_quantity > 0);
+  const preparing = voucher.items.filter((item) => item.preparing_quantity > 0);
 
   function renderItem(item: VoucherItem) {
-    const done = item.available_quantity === 0;
-    const ready = isReadyForPickup(item);
+    const done = item.remaining_quantity === 0;
+    const ready = item.available_quantity > 0;
     return (
       <li key={item.id} className="flex items-center gap-3 rounded-2xl border p-4">
         <span aria-hidden className="text-2xl">
           {item.emoji ?? (item.requires_prep ? "🍽️" : "🍸")}
         </span>
         <div className="min-w-0 flex-1">
-          <p className="font-medium">{item.name}</p>
+          <p className="font-medium">
+            {item.quantity}× {item.name}
+          </p>
           <p className="text-sm text-muted-foreground">
             {done
               ? `${item.quantity} retirado${item.quantity > 1 ? "s" : ""}`
-              : `${item.available_quantity} de ${item.quantity} disponível para retirada`}
+              : `${item.available_quantity} pronta(s) para retirada · ${item.preparing_quantity} em preparo`}
           </p>
         </div>
         {done ? (
@@ -219,6 +234,9 @@ function VoucherPage() {
                 {deliveredItems} de {totalItems} itens
               </span>
             </div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {readyItems} pronta(s) para retirada · {preparingItems} em preparo
+            </p>
             <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-secondary" role="progressbar" aria-valuenow={deliveredItems} aria-valuemin={0} aria-valuemax={totalItems}>
               <div
                 className="h-full rounded-full bg-primary transition-all"
@@ -228,7 +246,14 @@ function VoucherPage() {
           </div>
         </div>
 
-        <div className="mt-5 grid gap-2 sm:grid-cols-2">
+        <Button asChild variant="ghost" className="mt-5 w-full">
+          <Link to="/meus-pedidos">
+            <ListOrdered className="mr-2 size-4" aria-hidden />
+            Ver todos os meus pedidos
+          </Link>
+        </Button>
+
+        <div className="mt-3 grid gap-2 sm:grid-cols-2">
           <Button variant="outline" disabled={busy !== null} onClick={() => void handleReceipt("download")}>
             <Download className="mr-2 size-4" /> Baixar comprovante
           </Button>
