@@ -161,18 +161,19 @@ function VoucherPage() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-xl px-5 py-8">
+      <main className="mx-auto max-w-xl px-5 py-6">
         {!complete && permission === "default" && (
-          <div className="mb-5 rounded-2xl border-2 border-primary/50 bg-primary/10 p-4">
+          <div className="mb-4 rounded-3xl bg-primary/10 p-4 shadow-soft">
             <div className="flex items-start gap-3">
-              <Bell className="mt-0.5 size-5 text-primary" aria-hidden />
+              <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-primary/20 text-primary">
+                <Bell className="size-5" aria-hidden />
+              </span>
               <div className="min-w-0 flex-1">
                 <p className="font-semibold">Quer ser avisado quando ficar pronto?</p>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Seu celular vibra, toca um alerta e mostra uma notificação assim que o balcão marcar cada item como
-                  pronto.
+                  Seu celular vibra, toca um alerta e mostra um aviso na tela assim que cada item ficar pronto.
                 </p>
-                <Button className="mt-3 w-full sm:w-auto" onClick={() => void enableAlerts()}>
+                <Button className="mt-3 w-full rounded-full sm:w-auto" onClick={() => void enableAlerts()}>
                   <Bell className="mr-2 size-4" /> Ativar avisos
                 </Button>
               </div>
@@ -181,18 +182,19 @@ function VoucherPage() {
         )}
 
         {!complete && (permission === "denied" || permission === "unsupported") && (
-          <p className="mb-5 rounded-2xl border p-4 text-sm text-muted-foreground">
+          <p className="mb-4 rounded-3xl bg-muted/60 p-4 text-sm text-muted-foreground">
             As notificações estão bloqueadas neste navegador. Deixe esta tela aberta: o aviso de item pronto aparece
             aqui com vibração e som.
           </p>
         )}
 
         {!complete && readyNow.length > 0 && (
-          <div className="mb-5 flex items-start gap-3 rounded-2xl border border-primary/40 bg-primary/10 p-4">
-            <PartyPopper className="mt-0.5 size-5 text-primary" aria-hidden />
-            <div>
+          <div className="mb-4 flex items-start gap-3 rounded-3xl bg-primary/10 p-4 shadow-soft">
+            <PartyPopper className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden />
+            <div className="min-w-0">
               <p className="font-medium">
-                {readyNow.length === 1 ? "Seu item está pronto" : `${readyNow.length} itens estão prontos`} — vá ao balcão
+                {readyNow.length === 1 ? "Seu item está pronto" : `${readyNow.length} itens estão prontos`} — vá ao
+                balcão
               </p>
               <p className="text-sm text-muted-foreground">
                 {readyNow.map((item) => item.name).join(", ")}
@@ -201,7 +203,7 @@ function VoucherPage() {
             </div>
           </div>
         )}
-        <div className="rounded-3xl border p-6 text-center">
+        <div id="voucher-qr" className="scroll-mt-6 surface-card p-6 text-center">
           <div className="flex justify-center">
             <QrCode value={voucherUrl} size={252} title={`QR Code do pedido ${voucher.order.code}`} />
           </div>
@@ -229,13 +231,6 @@ function VoucherPage() {
             </div>
           </div>
         </div>
-
-        <Button asChild variant="ghost" className="mt-5 w-full">
-          <Link to="/meus-pedidos">
-            <ListOrdered className="mr-2 size-4" aria-hidden />
-            Ver todos os meus pedidos
-          </Link>
-        </Button>
 
         <div className="mt-3 grid gap-2 sm:grid-cols-2">
           <Button variant="outline" disabled={busy !== null} onClick={() => void handleReceipt("download")}>
