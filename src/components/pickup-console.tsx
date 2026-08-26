@@ -23,8 +23,10 @@ export interface PickupConsoleProps {
   onLookup: (code: string) => Promise<PickupResult>;
   /** Registra a retirada das quantidades selecionadas. */
   onRegister: (code: string, items: { item_id: string; quantity: number }[]) => Promise<PickupResult>;
-  /** Marca um item da cozinha como pronto (opcional). */
-  onMarkReady?: (code: string, itemId: string) => Promise<{ error: string | null }>;
+  /** Libera uma quantidade do item como pronta (valor absoluto). */
+  onSetReadyQuantity?: (code: string, itemId: string, quantity: number) => Promise<{ error: string | null }>;
+  /** Busca pedidos ativos pelo CPF, quando o cliente está sem o QR Code. */
+  onFindByDocument?: (document: string) => Promise<{ orders: VoucherPayload[]; error: string | null }>;
   /** Abre um pedido vindo da fila, sem escanear. */
   openRequest?: { code: string; nonce: number } | null;
   /** Avisa o pai quando a retirada muda o pedido (para atualizar a fila). */
@@ -32,12 +34,22 @@ export interface PickupConsoleProps {
 }
 
 /** Console de leitura e retirada usado pelo dono (painel) e pelo funcionário (balcão). */
-export function PickupConsole({ onLookup, onRegister, onMarkReady, openRequest, onChanged }: PickupConsoleProps) {
+export function PickupConsole({
+  onLookup,
+  onRegister,
+  onSetReadyQuantity,
+  onFindByDocument,
+  openRequest,
+  onChanged,
+}: PickupConsoleProps) {
   const [voucher, setVoucher] = useState<VoucherPayload | null>(null);
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [manualCode, setManualCode] = useState("");
+  const [document, setDocument] = useState("");
+  const [matches, setMatches] = useState<VoucherPayload[] | null>(null);
   const [feedback, setFeedback] = useState<ScanFeedback>(null);
   const [frame, setFrame] = useState<"idle" | "success" | "error">("idle");
+
 
 
   function applyVoucher(data: VoucherPayload) {
