@@ -295,6 +295,7 @@ function VoucherPage() {
           </p>
         )}
       </main>
+      <ClientTabBar voucherCode={code} />
     </div>
   );
 }
