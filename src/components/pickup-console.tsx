@@ -45,7 +45,7 @@ export function PickupConsole({
   const [voucher, setVoucher] = useState<VoucherPayload | null>(null);
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [manualCode, setManualCode] = useState("");
-  const [document, setDocument] = useState("");
+  const [cpfInput, setCpfInput] = useState("");
   const [matches, setMatches] = useState<VoucherPayload[] | null>(null);
   const [feedback, setFeedback] = useState<ScanFeedback>(null);
   const [frame, setFrame] = useState<"idle" | "success" | "error">("idle");
