@@ -340,6 +340,37 @@ function MenuDetail() {
                   />
                   Disponível
                 </label>
+                <ProductEditDialog
+                  product={{
+                    id: product.id,
+                    name: product.name,
+                    description: product.description,
+                    emoji: product.emoji,
+                    price_cents: product.price_cents,
+                    prep_minutes: product.prep_minutes,
+                    stock: product.stock,
+                    category_id: product.category_id,
+                  }}
+                  categories={(categories.data ?? []).map((category) => ({ id: category.id, name: category.name }))}
+                  pending={productMutation.isPending}
+                  onSave={(values) =>
+                    new Promise<void>((resolve, reject) => {
+                      productMutation.mutate(
+                        { type: "update", id: product.id, values },
+                        {
+                          onSuccess: () => {
+                            toast.success("Produto atualizado");
+                            resolve();
+                          },
+                          onError: (error: Error) => {
+                            toast.error(error.message);
+                            reject(error);
+                          },
+                        },
+                      );
+                    })
+                  }
+                />
                 <Button
                   variant="ghost"
                   size="icon"
@@ -349,6 +380,7 @@ function MenuDetail() {
                   <Trash2 className="size-4" />
                 </Button>
               </div>
+
             </div>
           ))}
           {(products.data?.length ?? 0) === 0 && (
