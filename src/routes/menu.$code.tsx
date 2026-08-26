@@ -446,7 +446,7 @@ function MenuPage() {
           </div>
         </div>
       )}
-      <ClientTabBar menuCode={menu.menu.code} />
+      {count === 0 && !checkoutOpen && <ClientTabBar menuCode={menu.menu.code} />}
     </div>
 
   );
