@@ -17,6 +17,7 @@ import {
   ownerFindOrdersByDocument,
   ownerListOpenOrders,
   ownerRegisterPickup,
+  ownerSetItemStatusByCode,
   ownerSetReadyQuantity,
 } from "@/lib/owner-pickup.functions";
 import {
@@ -25,6 +26,7 @@ import {
   staffGetOrder,
   staffListOpenOrders,
   staffLoginByCode,
+  staffSetItemStatus,
   staffSetReadyQuantity,
 } from "@/lib/tapgo.functions";
 import type { StaffSession } from "@/lib/tapgo-types";
@@ -72,10 +74,12 @@ function ScannerPage() {
   const lookupStaff = useServerFn(staffGetOrder);
   const pickupStaff = useServerFn(registerPickup);
   const readyStaff = useServerFn(staffSetReadyQuantity);
+  const acceptStaff = useServerFn(staffSetItemStatus);
   const findStaff = useServerFn(staffFindOrdersByDocument);
   const lookupOwner = useServerFn(ownerFetchVoucher);
   const pickupOwner = useServerFn(ownerRegisterPickup);
   const readyOwner = useServerFn(ownerSetReadyQuantity);
+  const acceptOwner = useServerFn(ownerSetItemStatusByCode);
   const findOwner = useServerFn(ownerFindOrdersByDocument);
   const listOwner = useServerFn(ownerListOpenOrders);
   const listStaff = useServerFn(staffListOpenOrders);
