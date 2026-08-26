@@ -59,7 +59,7 @@ export function PickupConsole({
       Object.fromEntries(
         data.items.map((item) => [
           item.id,
-          isReadyForPickup(item) && item.available_quantity > 0 ? item.available_quantity : 0,
+          item.available_quantity > 0 ? item.available_quantity : 0,
         ]),
       ),
     );
