@@ -64,8 +64,8 @@ function AdminLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-secondary/30 lg:flex">
-      <aside className="border-b bg-background lg:min-h-screen lg:w-64 lg:border-b-0 lg:border-r">
+    <div className="min-h-screen bg-secondary/30 lg:flex lg:gap-0">
+      <aside className="bg-background lg:min-h-screen lg:w-72 lg:border-r">
         <div className="flex items-center justify-between gap-3 px-5 py-5">
           <div className="min-w-0">
             <span className="font-display text-lg font-semibold">
@@ -75,20 +75,26 @@ function AdminLayout() {
               {establishment.isLoading ? "Carregando…" : establishment.data?.name}
             </p>
           </div>
-          <Button variant="ghost" size="icon" aria-label="Sair" onClick={() => void signOut()}>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="rounded-full"
+            aria-label="Sair"
+            onClick={() => void signOut()}
+          >
             <LogOut className="size-4" />
           </Button>
         </div>
-        <nav className="flex gap-1 overflow-x-auto px-3 pb-3 lg:flex-col lg:overflow-visible">
+        <nav className="flex gap-1.5 overflow-x-auto px-3 pb-3 lg:flex-col lg:overflow-visible">
           {nav.map((item) => (
             <Link
               key={item.to}
               to={item.to}
               activeOptions={{ exact: "exact" in item ? item.exact : false }}
-              className="shrink-0 rounded-xl px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary"
-              activeProps={{ className: cn("bg-secondary font-medium text-foreground") }}
+              className="shrink-0 rounded-2xl px-3.5 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-secondary/70 hover:text-foreground"
+              activeProps={{ className: cn("bg-primary/15 font-medium text-foreground") }}
             >
-              <span className="flex items-center gap-2">
+              <span className="flex items-center gap-2.5">
                 <item.icon className="size-4" aria-hidden />
                 {item.label}
               </span>
@@ -98,14 +104,13 @@ function AdminLayout() {
             href="/scanner"
             target="_blank"
             rel="noreferrer"
-            className="shrink-0 rounded-xl px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary"
+            className="shrink-0 rounded-2xl px-3.5 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-secondary/70 hover:text-foreground"
           >
-            <span className="flex items-center gap-2">
+            <span className="flex items-center gap-2.5">
               <ScanLine className="size-4" aria-hidden />
               Scanner em outro aparelho
             </span>
           </a>
-
         </nav>
       </aside>
 
