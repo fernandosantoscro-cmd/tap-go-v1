@@ -287,6 +287,57 @@ export function PickupConsole({
             Buscar
           </Button>
         </form>
+
+        {onFindByDocument && (
+          <div className="mt-4 rounded-xl border border-dashed p-4">
+            <p className="text-sm font-medium">Cliente sem o QR Code?</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Busque o pedido pelo CPF informado no pagamento.
+            </p>
+            <form
+              className="mt-3 flex gap-2"
+              onSubmit={(event) => {
+                event.preventDefault();
+                const digits = onlyDigits(cpfInput);
+                if (digits.length !== 11) {
+                  toast.error("Digite os 11 números do CPF.");
+                  return;
+                }
+                findMutation.mutate(digits);
+              }}
+            >
+              <Input
+                value={cpfInput}
+                onChange={(event) => setCpfInput(maskCpf(event.target.value))}
+                placeholder="000.000.000-00"
+                inputMode="numeric"
+                aria-label="CPF do cliente"
+              />
+              <Button type="submit" variant="outline" disabled={findMutation.isPending}>
+                {findMutation.isPending ? "Buscando…" : "Buscar pedido"}
+              </Button>
+            </form>
+            {matches && matches.length > 1 && (
+              <ul className="mt-3 space-y-2">
+                {matches.map((entry) => (
+                  <li key={entry.order.code}>
+                    <Button
+                      variant="secondary"
+                      className="w-full justify-between"
+                      onClick={() => {
+                        applyVoucher(entry);
+                        setMatches(null);
+                      }}
+                    >
+                      <span className="font-display tracking-[0.2em]">{entry.order.code}</span>
+                      <span>{formatBRL(entry.order.total_cents)}</span>
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
       </section>
 
       <section>
@@ -295,6 +346,7 @@ export function PickupConsole({
             {loadMutation.isPending ? "Consultando voucher…" : "Nenhum voucher lido ainda."}
           </div>
         ) : (
+
           <div className="rounded-2xl border bg-background p-6">
             <div className="flex items-start justify-between gap-3">
               <div>
