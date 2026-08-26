@@ -33,9 +33,9 @@ function MyOrdersPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background pb-16">
-      <header className="border-b">
-        <div className="mx-auto max-w-xl px-5 py-6">
+    <div className="min-h-screen bg-secondary/20 pb-28">
+      <header>
+        <div className="mx-auto max-w-xl px-5 pb-2 pt-8">
           <p className="font-display text-lg font-semibold">
             Tap<span className="text-primary">Go</span>
           </p>
@@ -47,15 +47,15 @@ function MyOrdersPage() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-xl px-5 py-8">
+      <main className="mx-auto max-w-xl px-5 py-6">
         {orders.length === 0 ? (
-          <p className="rounded-2xl border border-dashed p-8 text-center text-sm text-muted-foreground">
+          <p className="rounded-3xl bg-muted/50 p-8 text-center text-sm text-muted-foreground">
             Nenhum pedido por aqui ainda. Escaneie o QR Code do cardápio para fazer o primeiro.
           </p>
         ) : (
           <ul className="space-y-3">
             {orders.map((order) => (
-              <li key={order.code} className="rounded-2xl border p-4">
+              <li key={order.code} className="surface-card p-4">
                 <div className="flex items-center justify-between gap-3">
                   <div className="min-w-0">
                     <p className="font-display text-lg font-semibold tracking-[0.2em]">{order.code}</p>
@@ -67,13 +67,14 @@ function MyOrdersPage() {
                   <Button
                     size="icon"
                     variant="ghost"
+                    className="rounded-full"
                     aria-label={`Remover pedido ${order.code} desta lista`}
                     onClick={() => forgetOrder(order.code)}
                   >
                     <Trash2 className="size-4" aria-hidden />
                   </Button>
                 </div>
-                <Button asChild className="mt-3 h-12 w-full">
+                <Button asChild className="mt-3 h-12 w-full rounded-full">
                   <Link to="/voucher/$code" params={{ code: order.code }}>
                     <QrCode className="mr-2 size-4" aria-hidden />
                     Abrir voucher e status
@@ -85,6 +86,7 @@ function MyOrdersPage() {
           </ul>
         )}
       </main>
+      <ClientTabBar voucherCode={orders[0]?.code} />
     </div>
   );
 }
