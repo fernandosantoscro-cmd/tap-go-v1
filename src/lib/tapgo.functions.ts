@@ -21,27 +21,42 @@ export const fetchVoucher = createServerFn({ method: "GET" })
   });
 
 export const createOrder = createServerFn({ method: "POST" })
-  .inputValidator((data: { menuCode: string; items: CartLine[]; paymentMethod: string }) => {
-    if (!Array.isArray(data.items) || data.items.length === 0) throw new Error("Carrinho vazio");
-    return {
-      menuCode: String(data.menuCode).slice(0, 32),
-      paymentMethod: ["pix", "card"].includes(data.paymentMethod) ? data.paymentMethod : "pix",
-      items: data.items.slice(0, 40).map((line) => ({
-        product_id: String(line.product_id),
-        quantity: Math.max(1, Math.min(99, Number(line.quantity) || 1)),
-      })),
-    };
-  })
+  .inputValidator(
+    (data: {
+      menuCode: string;
+      items: CartLine[];
+      paymentMethod: string;
+      customerName?: string | null;
+      customerDocument: string;
+    }) => {
+      if (!Array.isArray(data.items) || data.items.length === 0) throw new Error("Carrinho vazio");
+      const document = String(data.customerDocument ?? "").replace(/\D/g, "");
+      if (document.length !== 11) throw new Error("Informe um CPF válido para continuar");
+      return {
+        menuCode: String(data.menuCode).slice(0, 32),
+        paymentMethod: ["pix", "card"].includes(data.paymentMethod) ? data.paymentMethod : "pix",
+        customerName: data.customerName ? String(data.customerName).trim().slice(0, 80) : null,
+        customerDocument: document,
+        items: data.items.slice(0, 40).map((line) => ({
+          product_id: String(line.product_id),
+          quantity: Math.max(1, Math.min(99, Number(line.quantity) || 1)),
+        })),
+      };
+    },
+  )
   .handler(async ({ data }): Promise<{ code: string; total_cents: number }> => {
     const { publicDb } = await import("./public-db.server");
     const { data: result, error } = await publicDb().rpc("create_order", {
       p_menu_code: data.menuCode,
       p_items: data.items,
       p_payment_method: data.paymentMethod,
+      p_customer_name: data.customerName,
+      p_customer_document: data.customerDocument,
     });
     if (error) throw new Error(error.message);
     return result as { code: string; total_cents: number };
   });
+
 
 export const confirmPayment = createServerFn({ method: "POST" })
   .inputValidator((data: { code: string }) => ({ code: String(data.code).slice(0, 32) }))
