@@ -1,6 +1,7 @@
-import { useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { CheckCircle2, ChefHat, Download, PackageCheck, RefreshCcw } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { CheckCircle2, ChefHat, Download, FileText, PackageCheck, RefreshCcw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -11,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useEstablishment, useOrders, useSetOrderStatus, type AdminOrder } from "@/lib/admin-db";
 import { buildRange, downloadCsv, toCsv, type DateRange } from "@/lib/date-range";
 import { formatBRL, formatDateTime, ORDER_STATUS_LABEL } from "@/lib/format";
+import { reissueFiscalDocument } from "@/lib/integrations.functions";
 
 export const Route = createFileRoute("/_authenticated/admin/pedidos")({
   component: OrdersPage,
@@ -31,6 +33,10 @@ function OrdersPage() {
   const setStatus = useSetOrderStatus();
   const queryClient = useQueryClient();
   const [filter, setFilter] = useState<(typeof FILTERS)[number]["key"]>("abertos");
+  const reissueFn = useServerFn(reissueFiscalDocument);
+  const reissue = useMutation({
+    mutationFn: (code: string) => reissueFn({ data: { code } }),
+  });
 
 
   useEffect(() => {
@@ -147,6 +153,18 @@ function OrdersPage() {
                   <Badge variant={order.payment_status === "pago" ? "default" : "secondary"} className="mt-1">
                     {order.payment_status === "pago" ? ORDER_STATUS_LABEL[order.status] : "Aguardando pagamento"}
                   </Badge>
+                  {(() => {
+                    const fiscal = (order as unknown as Record<string, unknown>)["fiscal_status"];
+                    if (!fiscal || fiscal === "nenhuma") return null;
+                    return (
+                      <Badge
+                        variant={fiscal === "emitida" ? "outline" : fiscal === "erro" ? "destructive" : "secondary"}
+                        className="mt-1 ml-1"
+                      >
+                        {fiscal === "emitida" ? "NF emitida" : fiscal === "erro" ? "NF com erro" : "NF pendente"}
+                      </Badge>
+                    );
+                  })()}
                 </div>
               </div>
 
@@ -203,6 +221,22 @@ function OrdersPage() {
                   <Button size="sm" variant="outline" onClick={() => changeStatus(order, "entregue")}>
                     <CheckCircle2 className="mr-2 size-4" /> Entregue
                   </Button>
+                  {(order as unknown as Record<string, unknown>)["fiscal_status"] === "erro" && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={reissue.isPending}
+                      onClick={() =>
+                        reissue.mutate(order.code, {
+                          onSuccess: (r) =>
+                            r.issued ? toast.success("Nota fiscal emitida") : toast.error(r.error ?? "Falha ao emitir"),
+                          onError: (e: Error) => toast.error(e.message),
+                        })
+                      }
+                    >
+                      <FileText className="mr-2 size-4" /> Reemitir nota
+                    </Button>
+                  )}
                 </div>
               )}
             </article>

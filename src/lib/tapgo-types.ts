@@ -86,10 +86,12 @@ export interface VoucherPayload {
     paid_at: string | null;
     customer_name?: string | null;
     payment_reference: string | null;
+    fiscal_status?: string;
   };
   establishment: { name: string } | null;
   event: { name: string; location: string | null } | null;
   menu: { name: string } | null;
+  fiscal?: { status: string; number: string | null; pdf_url: string | null } | null;
   items: VoucherItem[];
 }
 
