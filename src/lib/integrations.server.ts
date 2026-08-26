@@ -106,11 +106,11 @@ export async function dispatchOutboundWebhook(
   payload: Record<string, unknown>,
 ) {
   const integration = await getIntegration(establishmentId, "webhook_custom");
-  const url = integration?.enabled ? String(integration.settings?.url ?? "") : "";
+  const url = integration?.enabled ? String(integration.settings?.['url'] ?? "") : "";
   if (!integration || !url) return;
 
   const body = JSON.stringify({ type: eventType, timestamp: new Date().toISOString(), data: payload });
-  const secret = String(integration.credentials?.api_key ?? "");
+  const secret = String(integration.credentials?.['api_key'] ?? "");
   const { createHmac } = await import("crypto");
   const signature = createHmac("sha256", secret || "tapgo").update(body).digest("hex");
 
@@ -150,7 +150,7 @@ export async function createMercadoPagoPix(
   integration: IntegrationRow,
   notificationUrl: string,
 ): Promise<PixCharge> {
-  const token = String(integration.credentials?.access_token ?? "");
+  const token = String(integration.credentials?.['access_token'] ?? "");
   if (!token) throw new Error("Access token do Mercado Pago não configurado");
 
   const res = await fetch("https://api.mercadopago.com/v1/payments", {
@@ -187,7 +187,7 @@ export async function createMercadoPagoPix(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const poi = (json as any).point_of_interaction?.transaction_data ?? {};
   return {
-    payment_id: String(json.id ?? ""),
+    payment_id: String(json['id'] ?? ""),
     qr_code: poi.qr_code ?? null,
     qr_code_base64: poi.qr_code_base64 ?? null,
     ticket_url: poi.ticket_url ?? null,
@@ -214,8 +214,8 @@ interface FiscalResult {
 }
 
 async function issueNfeio(order: OrderForIntegration, integration: IntegrationRow): Promise<FiscalResult> {
-  const apiKey = String(integration.credentials?.api_key ?? "");
-  const companyId = String(integration.credentials?.company_id ?? "");
+  const apiKey = String(integration.credentials?.['api_key'] ?? "");
+  const companyId = String(integration.credentials?.['company_id'] ?? "");
   if (!apiKey || !companyId) throw new Error("Configure API key e Company ID da NFE.io");
 
   const res = await fetch(
@@ -224,7 +224,7 @@ async function issueNfeio(order: OrderForIntegration, integration: IntegrationRo
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        cityServiceCode: String(integration.settings?.city_service_code ?? "0107"),
+        cityServiceCode: String(integration.settings?.['city_service_code'] ?? "0107"),
         description: `Pedido ${order.code} — consumo no estabelecimento`,
         servicesAmount: order.total_cents / 100,
         borrower: order.customer_document
@@ -246,9 +246,9 @@ async function issueNfeio(order: OrderForIntegration, integration: IntegrationRo
 }
 
 async function issueFocusNfe(order: OrderForIntegration, integration: IntegrationRow): Promise<FiscalResult> {
-  const token = String(integration.credentials?.api_key ?? "");
+  const token = String(integration.credentials?.['api_key'] ?? "");
   if (!token) throw new Error("Configure o token da Focus NFe");
-  const homologacao = integration.settings?.ambiente !== "producao";
+  const homologacao = integration.settings?.['ambiente'] !== "producao";
   const base = "https://api.focusnfe.com.br";
   const ref = `tapgo-${order.code.toLowerCase()}`;
   const auth = btoa(`${token}:`);
@@ -298,8 +298,8 @@ async function issueFocusNfe(order: OrderForIntegration, integration: Integratio
 }
 
 async function issueEnotas(order: OrderForIntegration, integration: IntegrationRow): Promise<FiscalResult> {
-  const apiKey = String(integration.credentials?.api_key ?? "");
-  const companyId = String(integration.credentials?.company_id ?? "");
+  const apiKey = String(integration.credentials?.['api_key'] ?? "");
+  const companyId = String(integration.credentials?.['company_id'] ?? "");
   if (!apiKey || !companyId) throw new Error("Configure API key e Empresa ID da eNotas");
   const auth = btoa(apiKey);
 
@@ -308,7 +308,7 @@ async function issueEnotas(order: OrderForIntegration, integration: IntegrationR
     headers: { Authorization: `Basic ${auth}`, "Content-Type": "application/json" },
     body: JSON.stringify({
       id: `tapgo-${order.code.toLowerCase()}`,
-      ambienteEmissao: integration.settings?.ambiente === "producao" ? "Producao" : "Homologacao",
+      ambienteEmissao: integration.settings?.['ambiente'] === "producao" ? "Producao" : "Homologacao",
       tipo: "NFCe",
       consumidor: order.customer_document
         ? { cpfCnpj: order.customer_document, nome: order.customer_name ?? "Cliente" }
@@ -348,9 +348,9 @@ export async function issueFiscalForOrder(orderCode: string): Promise<{ issued: 
 
   const integration = await getIntegration(order.establishment_id, "fiscal");
   if (!integration?.enabled) return { issued: false };
-  if (integration.settings?.auto_issue === false) return { issued: false };
+  if (integration.settings?.['auto_issue'] === false) return { issued: false };
 
-  const provider = String(integration.settings?.fiscal_provider ?? "nfeio");
+  const provider = String(integration.settings?.['fiscal_provider'] ?? "nfeio");
   const adapter = FISCAL_ADAPTERS[provider];
   if (!adapter) return { issued: false, error: `Provider fiscal desconhecido: ${provider}` };
 
