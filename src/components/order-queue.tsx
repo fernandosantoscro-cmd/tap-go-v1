@@ -7,15 +7,15 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatBRL, formatTime, ORDER_STATUS_LABEL } from "@/lib/format";
 import type { OpenOrder, VoucherItem } from "@/lib/tapgo-types";
-import { isReadyForPickup, kitchenItemLabel } from "@/lib/voucher-groups";
+import { isPreparing, kitchenItemLabel } from "@/lib/voucher-groups";
 
 type Filter = "preparo" | "prontos" | "todos";
 
 export interface OrderQueueProps {
   /** Lista os pedidos pagos com itens pendentes. */
   onList: () => Promise<OpenOrder[]>;
-  /** Altera o status de um item do pedido (preparando/pronto). */
-  onSetItemStatus: (code: string, itemId: string, status: "preparando" | "pronto") => Promise<{ error: string | null }>;
+  /** Define quantas unidades do item já estão prontas (valor absoluto). */
+  onSetReadyQuantity: (code: string, itemId: string, quantity: number) => Promise<{ error: string | null }>;
   /** Abre o pedido no console de retirada, sem escanear. */
   onOpenOrder?: (code: string) => void;
   /** Identifica a fila no cache (dono ou PIN do estande). */
@@ -23,11 +23,11 @@ export interface OrderQueueProps {
 }
 
 function pendingItems(order: OpenOrder): VoucherItem[] {
-  return order.items.filter((item) => item.available_quantity > 0);
+  return order.items.filter((item) => item.remaining_quantity > 0);
 }
 
-/** Fila de preparo: o atendente vê a lista de compras e libera cada produto antes de escanear. */
-export function OrderQueue({ onList, onSetItemStatus, onOpenOrder, scope }: OrderQueueProps) {
+/** Fila de preparo: o atendente libera as unidades aos poucos, sem precisar escanear. */
+export function OrderQueue({ onList, onSetReadyQuantity, onOpenOrder, scope }: OrderQueueProps) {
   const queryClient = useQueryClient();
   const queryKey = ["order-queue", scope];
   const [filter, setFilter] = useState<Filter>("todos");
@@ -38,14 +38,14 @@ export function OrderQueue({ onList, onSetItemStatus, onOpenOrder, scope }: Orde
     refetchInterval: 5000,
   });
 
-  const statusMutation = useMutation({
-    mutationFn: async (payload: { code: string; itemId: string; status: "preparando" | "pronto" }) => {
-      const result = await onSetItemStatus(payload.code, payload.itemId, payload.status);
+  const readyMutation = useMutation({
+    mutationFn: async (payload: { code: string; itemId: string; quantity: number; label: string }) => {
+      const result = await onSetReadyQuantity(payload.code, payload.itemId, payload.quantity);
       if (result.error) throw new Error(result.error);
       return payload;
     },
     onSuccess: (payload) => {
-      toast.success(payload.status === "pronto" ? "Item liberado para retirada" : "Item em preparo");
+      toast.success(payload.label);
       void queryClient.invalidateQueries({ queryKey });
     },
     onError: (error: Error) => toast.error(error.message || "Não foi possível atualizar o item"),
@@ -56,19 +56,32 @@ export function OrderQueue({ onList, onSetItemStatus, onOpenOrder, scope }: Orde
     .map((order) => ({ order, items: pendingItems(order) }))
     .filter(({ items }) => items.length > 0)
     .filter(({ items }) => {
-      if (filter === "prontos") return items.some((item) => isReadyForPickup(item));
-      if (filter === "preparo") return items.some((item) => !isReadyForPickup(item));
+      if (filter === "prontos") return items.some((item) => item.available_quantity > 0);
+      if (filter === "preparo") return items.some((item) => isPreparing(item));
       return true;
     });
 
-  const readyCount = allOrders.filter((order) => pendingItems(order).some((item) => isReadyForPickup(item))).length;
-  const prepCount = allOrders.filter((order) => pendingItems(order).some((item) => !isReadyForPickup(item))).length;
+  const readyCount = allOrders.filter((order) => pendingItems(order).some((item) => item.available_quantity > 0)).length;
+  const prepCount = allOrders.filter((order) => pendingItems(order).some((item) => isPreparing(item))).length;
 
   const tabs: { key: Filter; label: string }[] = [
     { key: "preparo", label: `Em preparo (${prepCount})` },
     { key: "prontos", label: `Prontos (${readyCount})` },
     { key: "todos", label: `Todos (${allOrders.length})` },
   ];
+
+  const release = (order: OpenOrder, item: VoucherItem, add: number) => {
+    const quantity = Math.min(item.quantity, item.ready_quantity + add);
+    readyMutation.mutate({
+      code: order.code,
+      itemId: item.id,
+      quantity,
+      label:
+        quantity >= item.quantity
+          ? `${item.name}: tudo liberado para retirada`
+          : `${item.name}: ${quantity} de ${item.quantity} prontas`,
+    });
+  };
 
   return (
     <section className="rounded-2xl border bg-background p-5">
@@ -79,7 +92,7 @@ export function OrderQueue({ onList, onSetItemStatus, onOpenOrder, scope }: Orde
             Fila de preparo
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Marque cada produto como pronto. O cliente vê a mudança no celular na hora.
+            Libere as unidades aos poucos (+1, +5 ou tudo). O cliente vê a quantidade pronta no celular na hora.
           </p>
         </div>
         <Button
@@ -120,15 +133,16 @@ export function OrderQueue({ onList, onSetItemStatus, onOpenOrder, scope }: Orde
       ) : (
         <ul className="mt-5 space-y-4">
           {orders.map(({ order, items }) => {
-            const allReady = items.every((item) => isReadyForPickup(item));
+            const allReady = items.every((item) => item.preparing_quantity === 0);
             return (
               <li key={order.code} className="rounded-2xl border p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
                     <p className="font-display text-lg font-semibold tracking-[0.18em]">{order.code}</p>
                     <p className="truncate text-xs text-muted-foreground">
-                      {[order.event_name, order.menu_name].filter(Boolean).join(" · ") || "Cardápio"} ·{" "}
-                      {formatTime(order.paid_at ?? order.created_at)} · {formatBRL(order.total_cents)}
+                      {[order.customer_name, order.event_name, order.menu_name].filter(Boolean).join(" · ") ||
+                        "Cardápio"}{" "}
+                      · {formatTime(order.paid_at ?? order.created_at)} · {formatBRL(order.total_cents)}
                     </p>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
@@ -146,9 +160,8 @@ export function OrderQueue({ onList, onSetItemStatus, onOpenOrder, scope }: Orde
 
                 <ul className="mt-3 space-y-2">
                   {items.map((item) => {
-                    const ready = isReadyForPickup(item);
-                    const busy =
-                      statusMutation.isPending && statusMutation.variables?.itemId === item.id;
+                    const busy = readyMutation.isPending && readyMutation.variables?.itemId === item.id;
+                    const pending = item.preparing_quantity;
                     return (
                       <li
                         key={item.id}
@@ -159,7 +172,11 @@ export function OrderQueue({ onList, onSetItemStatus, onOpenOrder, scope }: Orde
                         </span>
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-medium">
-                            {item.available_quantity}× {item.name}
+                            {item.quantity}× {item.name}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {item.available_quantity} pronta(s) · {pending} em preparo · {item.delivered_quantity}{" "}
+                            retirada(s)
                           </p>
                           <p className="flex items-center gap-1 text-xs text-muted-foreground">
                             {item.requires_prep ? (
@@ -175,37 +192,28 @@ export function OrderQueue({ onList, onSetItemStatus, onOpenOrder, scope }: Orde
                             )}
                           </p>
                         </div>
-                        {ready ? (
+                        {pending === 0 ? (
                           <span className="flex items-center gap-1 text-xs font-medium text-success">
                             <CheckCircle2 className="size-4" aria-hidden />
-                            Liberado
+                            Tudo liberado
                           </span>
                         ) : (
-                          <div className="flex gap-2">
-                            {item.status !== "preparando" && (
+                          <div className="flex flex-wrap gap-2">
+                            <Button size="sm" variant="outline" disabled={busy} onClick={() => release(order, item, 1)}>
+                              +1
+                            </Button>
+                            {pending > 1 && (
                               <Button
                                 size="sm"
                                 variant="outline"
                                 disabled={busy}
-                                onClick={() =>
-                                  statusMutation.mutate({
-                                    code: order.code,
-                                    itemId: item.id,
-                                    status: "preparando",
-                                  })
-                                }
+                                onClick={() => release(order, item, Math.min(5, pending))}
                               >
-                                Iniciar preparo
+                                +{Math.min(5, pending)}
                               </Button>
                             )}
-                            <Button
-                              size="sm"
-                              disabled={busy}
-                              onClick={() =>
-                                statusMutation.mutate({ code: order.code, itemId: item.id, status: "pronto" })
-                              }
-                            >
-                              {busy ? "Salvando…" : "Pronto"}
+                            <Button size="sm" disabled={busy} onClick={() => release(order, item, pending)}>
+                              {busy ? "Salvando…" : "Tudo pronto"}
                             </Button>
                           </div>
                         )}
@@ -214,19 +222,19 @@ export function OrderQueue({ onList, onSetItemStatus, onOpenOrder, scope }: Orde
                   })}
                 </ul>
 
-                {items.some((item) => !isReadyForPickup(item)) && (
+                {items.some((item) => isPreparing(item)) && (
                   <Button
                     variant="ghost"
                     size="sm"
                     className="mt-3"
-                    disabled={statusMutation.isPending}
+                    disabled={readyMutation.isPending}
                     onClick={() => {
-                      for (const item of items.filter((entry) => !isReadyForPickup(entry))) {
-                        statusMutation.mutate({ code: order.code, itemId: item.id, status: "pronto" });
+                      for (const item of items.filter((entry) => isPreparing(entry))) {
+                        release(order, item, item.preparing_quantity);
                       }
                     }}
                   >
-                    Marcar tudo pronto
+                    Liberar todo o pedido
                   </Button>
                 )}
               </li>
