@@ -232,11 +232,21 @@ function VoucherPage() {
           </div>
         </div>
 
-        <div className="mt-3 grid gap-2 sm:grid-cols-2">
-          <Button variant="outline" disabled={busy !== null} onClick={() => void handleReceipt("download")}>
+        <div className="mt-4 grid gap-2 sm:grid-cols-2">
+          <Button
+            variant="outline"
+            className="rounded-full"
+            disabled={busy !== null}
+            onClick={() => void handleReceipt("download")}
+          >
             <Download className="mr-2 size-4" /> Baixar comprovante
           </Button>
-          <Button variant="outline" disabled={busy !== null} onClick={() => void handleReceipt("share")}>
+          <Button
+            variant="outline"
+            className="rounded-full"
+            disabled={busy !== null}
+            onClick={() => void handleReceipt("share")}
+          >
             <Share2 className="mr-2 size-4" /> Enviar comprovante
           </Button>
         </div>
