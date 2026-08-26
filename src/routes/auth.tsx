@@ -69,6 +69,8 @@ function AuthPage() {
 
   function savePending() {
     localStorage.setItem(SIGNUP_KEY, JSON.stringify({ name, type, phone, document }));
+    // Cadastro novo passa obrigatoriamente pelo assistente de primeiros passos.
+    localStorage.setItem(SETUP_PENDING_KEY, "1");
   }
 
   async function handleSubmit(event: React.FormEvent) {
