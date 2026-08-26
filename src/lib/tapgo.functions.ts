@@ -69,14 +69,6 @@ export const confirmPayment = createServerFn({ method: "POST" })
     return (voucher as VoucherPayload | null) ?? null;
   });
 
-export const staffLogin = createServerFn({ method: "POST" })
-  .inputValidator((data: { pin: string }) => ({ pin: String(data.pin).slice(0, 12) }))
-  .handler(async ({ data }): Promise<StaffSession | null> => {
-    const { publicDb } = await import("./public-db.server");
-    const { data: result, error } = await publicDb().rpc("staff_login", { p_pin: data.pin });
-    if (error) throw new Error(error.message);
-    return (result as StaffSession | null) ?? null;
-  });
 
 export const staffGetOrder = createServerFn({ method: "POST" })
   .inputValidator((data: { pin: string; code: string }) => ({
