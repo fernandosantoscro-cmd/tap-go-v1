@@ -42,6 +42,18 @@ function AdminLayout() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const establishment = useEstablishment();
+  const menus = useMenus(establishment.data?.id);
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const onSetup = pathname.startsWith("/admin/primeiros-passos");
+
+  // Conta nova: leva ao assistente de primeiros passos antes do painel.
+  useEffect(() => {
+    if (onSetup || menus.isLoading) return;
+    if (isSetupPending(establishment.data, menus.data?.length)) {
+      void navigate({ to: "/admin/primeiros-passos", replace: true });
+    }
+  }, [establishment.data, menus.data, menus.isLoading, navigate, onSetup]);
+
 
   // Aplica o nome escolhido no cadastro na primeira abertura do painel.
   useEffect(() => {
