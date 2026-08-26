@@ -1,4 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+
 
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
@@ -44,28 +46,68 @@ function readPendingSignup(): PendingSignup | null {
   }
 }
 
+/** Sessão pronta neste aparelho? Evita chamar RPCs antes do token existir. */
+export function useHasSession() {
+  const queryClient = useQueryClient();
+  const [state, setState] = useState<"loading" | "yes" | "no">("loading");
+
+  useEffect(() => {
+    let active = true;
+    void supabase.auth.getSession().then(({ data }) => {
+      if (active) setState(data.session ? "yes" : "no");
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!active) return;
+      setState(session ? "yes" : "no");
+      if (session && (event === "SIGNED_IN" || event === "TOKEN_REFRESHED" || event === "INITIAL_SESSION")) {
+        void queryClient.invalidateQueries({ queryKey: ["establishment"] });
+      }
+    });
+    return () => {
+      active = false;
+      sub.subscription.unsubscribe();
+    };
+  }, [queryClient]);
+
+  return state;
+}
+
+function isAuthError(message: string) {
+  const m = message.toLowerCase();
+  return m.includes("não autenticado") || m.includes("jwt") || m.includes("token") || m.includes("unauthorized");
+}
+
 /** Garante que o usuário logado tenha um estabelecimento (cria no primeiro acesso). */
 export function useEstablishment() {
+  const hasSession = useHasSession();
   return useQuery({
     queryKey: ["establishment"],
+    enabled: hasSession === "yes",
     staleTime: 60_000,
-    retry: 2,
-    retryDelay: 800,
+    retry: 4,
+    retryDelay: (attempt) => Math.min(600 * 2 ** attempt, 5_000),
     queryFn: async (): Promise<Establishment> => {
-
       const pending = readPendingSignup();
       const args: { p_name?: string; p_document?: string; p_type?: string; p_phone?: string } = {};
       if (pending?.name) args.p_name = pending.name;
       if (pending?.document) args.p_document = pending.document;
       if (pending?.type) args.p_type = pending.type;
       if (pending?.phone) args.p_phone = pending.phone;
-      const result = await supabase.rpc("ensure_my_establishment", args);
+
+      let result = await supabase.rpc("ensure_my_establishment", args);
+
+      // Sessão pode ter expirado neste aparelho: tenta renovar uma vez.
+      if (result.error && isAuthError(result.error.message)) {
+        const { data } = await supabase.auth.refreshSession();
+        if (data.session) result = await supabase.rpc("ensure_my_establishment", args);
+      }
 
       if (!result.error && typeof window !== "undefined") localStorage.removeItem(SIGNUP_KEY);
       return unwrap(result) as unknown as Establishment;
     },
   });
 }
+
 
 /** Estado "aberto agora" calculado no banco (respeita fuso e horários). */
 export function useOpenState(establishmentId?: string) {
