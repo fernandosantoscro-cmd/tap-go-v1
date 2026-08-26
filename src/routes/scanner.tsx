@@ -14,16 +14,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { STAFF_ROLE_LABEL } from "@/lib/format";
 import {
   ownerFetchVoucher,
+  ownerFindOrdersByDocument,
   ownerListOpenOrders,
   ownerRegisterPickup,
-  ownerSetItemStatusByCode,
+  ownerSetReadyQuantity,
 } from "@/lib/owner-pickup.functions";
 import {
   registerPickup,
+  staffFindOrdersByDocument,
   staffGetOrder,
   staffListOpenOrders,
-  staffLogin,
-  staffSetItemStatus,
+  staffLoginByCode,
+  staffSetReadyQuantity,
 } from "@/lib/tapgo.functions";
 import type { StaffSession } from "@/lib/tapgo-types";
 
@@ -64,13 +66,15 @@ function ScannerPage() {
 
 
 
-  const login = useServerFn(staffLogin);
+  const login = useServerFn(staffLoginByCode);
   const lookupStaff = useServerFn(staffGetOrder);
   const pickupStaff = useServerFn(registerPickup);
-  const readyStaff = useServerFn(staffSetItemStatus);
+  const readyStaff = useServerFn(staffSetReadyQuantity);
+  const findStaff = useServerFn(staffFindOrdersByDocument);
   const lookupOwner = useServerFn(ownerFetchVoucher);
   const pickupOwner = useServerFn(ownerRegisterPickup);
-  const readyOwner = useServerFn(ownerSetItemStatusByCode);
+  const readyOwner = useServerFn(ownerSetReadyQuantity);
+  const findOwner = useServerFn(ownerFindOrdersByDocument);
   const listOwner = useServerFn(ownerListOpenOrders);
   const listStaff = useServerFn(staffListOpenOrders);
   const queryClient = useQueryClient();
@@ -290,13 +294,14 @@ function ScannerPage() {
               <OrderQueue
                 scope="owner"
                 onList={() => listOwner()}
-                onSetItemStatus={(code, itemId, status) => readyOwner({ data: { code, itemId, status } })}
+                onSetReadyQuantity={(code, itemId, quantity) => readyOwner({ data: { code, itemId, quantity } })}
                 onOpenOrder={(code) => setOpenRequest({ code, nonce: Date.now() })}
               />
               <PickupConsole
                 onLookup={(code) => lookupOwner({ data: { code } })}
                 onRegister={(code, items) => pickupOwner({ data: { code, items } })}
-                onMarkReady={(code, itemId) => readyOwner({ data: { code, itemId, status: "pronto" } })}
+                onSetReadyQuantity={(code, itemId, quantity) => readyOwner({ data: { code, itemId, quantity } })}
+                onFindByDocument={(document) => findOwner({ data: { document } })}
                 openRequest={openRequest}
                 onChanged={() => void queryClient.invalidateQueries({ queryKey: ["order-queue", "owner"] })}
               />
@@ -306,7 +311,7 @@ function ScannerPage() {
               <OrderQueue
                 scope={`pin:${pin}`}
                 onList={() => listStaff({ data: { pin } })}
-                onSetItemStatus={(code, itemId, status) => readyStaff({ data: { pin, code, itemId, status } })}
+                onSetReadyQuantity={(code, itemId, quantity) => readyStaff({ data: { pin, code, itemId, quantity } })}
                 onOpenOrder={(code) => setOpenRequest({ code, nonce: Date.now() })}
               />
               <PickupConsole
@@ -315,7 +320,8 @@ function ScannerPage() {
                   const voucher = await pickupStaff({ data: { pin, code, items } });
                   return { voucher, error: voucher ? null : "Não foi possível registrar a retirada" };
                 }}
-                onMarkReady={(code, itemId) => readyStaff({ data: { pin, code, itemId, status: "pronto" } })}
+                onSetReadyQuantity={(code, itemId, quantity) => readyStaff({ data: { pin, code, itemId, quantity } })}
+                onFindByDocument={(document) => findStaff({ data: { pin, document } })}
                 openRequest={openRequest}
                 onChanged={() => void queryClient.invalidateQueries({ queryKey: ["order-queue", `pin:${pin}`] })}
               />
