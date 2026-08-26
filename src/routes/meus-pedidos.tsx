@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, QrCode, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
+import { ClientTabBar } from "@/components/client-tabbar";
 import { Button } from "@/components/ui/button";
 import { formatBRL } from "@/lib/format";
 import { forgetOrder, listMyOrders, type StoredOrder } from "@/lib/my-orders";
