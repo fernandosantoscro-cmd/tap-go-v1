@@ -2,18 +2,20 @@ import { useMutation } from "@tanstack/react-query";
 import { createFileRoute, notFound, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { Clock, Minus, Plus, ShoppingBag, X } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
+import { ClientTabBar } from "@/components/client-tabbar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { isValidCpf, maskCpf, onlyDigits } from "@/lib/cpf";
 import { formatBRL } from "@/lib/format";
-import { rememberOrder } from "@/lib/my-orders";
+import { rememberMenuCode, rememberOrder } from "@/lib/my-orders";
 import { createOrder, fetchMenu } from "@/lib/tapgo.functions";
 import type { MenuPayload, MenuProduct } from "@/lib/tapgo-types";
 import { cn } from "@/lib/utils";
+
 
 
 export const Route = createFileRoute("/menu/$code")({
