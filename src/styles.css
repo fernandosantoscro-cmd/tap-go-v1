@@ -61,6 +61,7 @@
 
 :root {
   --radius: 0.875rem;
+  --shadow-soft: 0 1px 2px oklch(0.16 0 0 / 4%), 0 12px 32px -16px oklch(0.16 0 0 / 14%);
   --background: oklch(1 0 0);
   --foreground: oklch(0.16 0 0);
   --card: oklch(1 0 0);
@@ -102,6 +103,7 @@
 
 .dark {
   --background: oklch(0.14 0 0);
+  --shadow-soft: 0 1px 2px oklch(0 0 0 / 40%), 0 16px 40px -20px oklch(0 0 0 / 60%);
   --foreground: oklch(0.98 0 0);
   --card: oklch(0.18 0 0);
   --card-foreground: oklch(0.98 0 0);
@@ -158,4 +160,32 @@
 @utility tap-target {
   min-height: 3rem;
   min-width: 3rem;
+}
+
+/* Superfície macia de SaaS: sombra suave em vez de traço forte. */
+@utility shadow-soft {
+  box-shadow: var(--shadow-soft);
+}
+
+/* Card padrão do produto: cantos generosos, borda discreta, sombra leve. */
+@utility surface-card {
+  border-radius: var(--radius-3xl);
+  border: 1px solid color-mix(in oklab, var(--border) 70%, transparent);
+  background-color: var(--color-card);
+  box-shadow: var(--shadow-soft);
+}
+
+@utility animate-enter {
+  animation: alert-enter 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes alert-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }

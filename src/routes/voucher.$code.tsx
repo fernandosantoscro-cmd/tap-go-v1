@@ -4,12 +4,14 @@ import { Bell, CheckCircle2, Clock, Download, Flame, ListOrdered, PartyPopper, S
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
+import { ClientTabBar } from "@/components/client-tabbar";
 import { QrCode } from "@/components/qr-code";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { formatBRL, ORDER_STATUS_LABEL } from "@/lib/format";
 import { rememberOrder } from "@/lib/my-orders";
+import { publishOrderAlert } from "@/lib/order-alert-bus";
 import { downloadReceipt, shareReceipt } from "@/lib/receipt";
 import { fetchVoucher } from "@/lib/tapgo.functions";
 import type { VoucherItem, VoucherPayload } from "@/lib/tapgo-types";
@@ -61,6 +63,19 @@ function VoucherPage() {
   });
 
   const { permission, enableAlerts, readyAlert, dismissReady } = useOrderRealtime(code, () => void refetch());
+
+  // O aviso vira pop-up global (nada de overlay em tela cheia nesta tela).
+  useEffect(() => {
+    if (!readyAlert) return;
+    publishOrderAlert({
+      id: readyAlert.id,
+      code,
+      itemName: readyAlert.itemName,
+      quantity: 1,
+      sameScreen: true,
+    });
+    dismissReady();
+  }, [readyAlert, code, dismissReady]);
 
   useEffect(() => {
     if (!initial?.order) return;
@@ -144,25 +159,9 @@ function VoucherPage() {
 
 
   return (
-    <div className="min-h-screen bg-background pb-16">
-      {readyAlert && (
-        <div
-          role="alertdialog"
-          aria-live="assertive"
-          className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-primary px-8 text-center text-primary-foreground animate-fade-in"
-        >
-          <PartyPopper className="size-16 animate-scale-in" aria-hidden />
-          <p className="text-3xl font-semibold leading-tight">{readyAlert.itemName} está pronto!</p>
-          <p className="text-base opacity-80">
-            Vá ao balcão e mostre o QR Code do pedido {voucher.order.code}.
-          </p>
-          <Button variant="secondary" size="lg" className="mt-2" onClick={dismissReady}>
-            Ver QR de retirada
-          </Button>
-        </div>
-      )}
-      <header className="border-b bg-secondary/50">
-        <div className="mx-auto max-w-xl px-5 py-6 text-center">
+    <div className="min-h-screen bg-secondary/20 pb-28">
+      <header>
+        <div className="mx-auto max-w-xl px-5 pb-2 pt-8 text-center">
           <p className="text-xs uppercase tracking-widest text-muted-foreground">
             {voucher.establishment?.name ?? "TapGo"}
           </p>
@@ -177,18 +176,19 @@ function VoucherPage() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-xl px-5 py-8">
+      <main className="mx-auto max-w-xl px-5 py-6">
         {!complete && permission === "default" && (
-          <div className="mb-5 rounded-2xl border-2 border-primary/50 bg-primary/10 p-4">
+          <div className="mb-4 rounded-3xl bg-primary/10 p-4 shadow-soft">
             <div className="flex items-start gap-3">
-              <Bell className="mt-0.5 size-5 text-primary" aria-hidden />
+              <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-primary/20 text-primary">
+                <Bell className="size-5" aria-hidden />
+              </span>
               <div className="min-w-0 flex-1">
                 <p className="font-semibold">Quer ser avisado quando ficar pronto?</p>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Seu celular vibra, toca um alerta e mostra uma notificação assim que o balcão marcar cada item como
-                  pronto.
+                  Seu celular vibra, toca um alerta e mostra um aviso na tela assim que cada item ficar pronto.
                 </p>
-                <Button className="mt-3 w-full sm:w-auto" onClick={() => void enableAlerts()}>
+                <Button className="mt-3 w-full rounded-full sm:w-auto" onClick={() => void enableAlerts()}>
                   <Bell className="mr-2 size-4" /> Ativar avisos
                 </Button>
               </div>
@@ -197,18 +197,19 @@ function VoucherPage() {
         )}
 
         {!complete && (permission === "denied" || permission === "unsupported") && (
-          <p className="mb-5 rounded-2xl border p-4 text-sm text-muted-foreground">
+          <p className="mb-4 rounded-3xl bg-muted/60 p-4 text-sm text-muted-foreground">
             As notificações estão bloqueadas neste navegador. Deixe esta tela aberta: o aviso de item pronto aparece
             aqui com vibração e som.
           </p>
         )}
 
         {!complete && readyNow.length > 0 && (
-          <div className="mb-5 flex items-start gap-3 rounded-2xl border border-primary/40 bg-primary/10 p-4">
-            <PartyPopper className="mt-0.5 size-5 text-primary" aria-hidden />
-            <div>
+          <div className="mb-4 flex items-start gap-3 rounded-3xl bg-primary/10 p-4 shadow-soft">
+            <PartyPopper className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden />
+            <div className="min-w-0">
               <p className="font-medium">
-                {readyNow.length === 1 ? "Seu item está pronto" : `${readyNow.length} itens estão prontos`} — vá ao balcão
+                {readyNow.length === 1 ? "Seu item está pronto" : `${readyNow.length} itens estão prontos`} — vá ao
+                balcão
               </p>
               <p className="text-sm text-muted-foreground">
                 {readyNow.map((item) => item.name).join(", ")}
@@ -217,7 +218,7 @@ function VoucherPage() {
             </div>
           </div>
         )}
-        <div className="rounded-3xl border p-6 text-center">
+        <div id="voucher-qr" className="scroll-mt-6 surface-card p-6 text-center">
           <div className="flex justify-center">
             <QrCode value={voucherUrl} size={252} title={`QR Code do pedido ${voucher.order.code}`} />
           </div>
@@ -246,18 +247,21 @@ function VoucherPage() {
           </div>
         </div>
 
-        <Button asChild variant="ghost" className="mt-5 w-full">
-          <Link to="/meus-pedidos">
-            <ListOrdered className="mr-2 size-4" aria-hidden />
-            Ver todos os meus pedidos
-          </Link>
-        </Button>
-
-        <div className="mt-3 grid gap-2 sm:grid-cols-2">
-          <Button variant="outline" disabled={busy !== null} onClick={() => void handleReceipt("download")}>
+        <div className="mt-4 grid gap-2 sm:grid-cols-2">
+          <Button
+            variant="outline"
+            className="rounded-full"
+            disabled={busy !== null}
+            onClick={() => void handleReceipt("download")}
+          >
             <Download className="mr-2 size-4" /> Baixar comprovante
           </Button>
-          <Button variant="outline" disabled={busy !== null} onClick={() => void handleReceipt("share")}>
+          <Button
+            variant="outline"
+            className="rounded-full"
+            disabled={busy !== null}
+            onClick={() => void handleReceipt("share")}
+          >
             <Share2 className="mr-2 size-4" /> Enviar comprovante
           </Button>
         </div>
@@ -292,6 +296,7 @@ function VoucherPage() {
           </p>
         )}
       </main>
+      <ClientTabBar voucherCode={code} />
     </div>
   );
 }
