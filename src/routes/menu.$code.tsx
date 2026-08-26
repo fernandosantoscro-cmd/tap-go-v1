@@ -6,11 +6,15 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { isValidCpf, maskCpf, onlyDigits } from "@/lib/cpf";
 import { formatBRL } from "@/lib/format";
+import { rememberOrder } from "@/lib/my-orders";
 import { createOrder, fetchMenu } from "@/lib/tapgo.functions";
 import type { MenuPayload, MenuProduct } from "@/lib/tapgo-types";
 import { cn } from "@/lib/utils";
+
 
 export const Route = createFileRoute("/menu/$code")({
   loader: async ({ params }) => {
@@ -59,6 +63,19 @@ function MenuPage() {
   const [cart, setCart] = useState<Record<string, number>>({});
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [method, setMethod] = useState<"pix" | "card">("pix");
+  const [activeCategory, setActiveCategory] = useState<string>("all");
+  const [customerName, setCustomerName] = useState("");
+  const [cpf, setCpf] = useState("");
+
+  const cpfOk = isValidCpf(cpf);
+
+  const visibleCategories = useMemo(
+    () =>
+      activeCategory === "all"
+        ? menu.categories
+        : menu.categories.filter((category) => category.id === activeCategory),
+    [menu.categories, activeCategory],
+  );
 
   const products = useMemo(
     () => menu.categories.flatMap((category) => category.products ?? []),
@@ -85,14 +102,23 @@ function MenuPage() {
         data: {
           menuCode: menu.menu.code,
           paymentMethod: method,
+          customerName: customerName.trim() || null,
+          customerDocument: onlyDigits(cpf),
           items: lines.map((line) => ({ product_id: line.product.id, quantity: line.quantity })),
         },
       }),
     onSuccess: (order) => {
+      rememberOrder({
+        code: order.code,
+        establishment: menu.establishment.name,
+        total_cents: order.total_cents,
+        created_at: new Date().toISOString(),
+      });
       void navigate({ to: "/pagamento/$code", params: { code: order.code } });
     },
     onError: (error: Error) => toast.error(error.message || "Não foi possível criar o pedido"),
   });
+
 
   const change = (productId: string, delta: number) =>
     setCart((current) => {
@@ -152,21 +178,38 @@ function MenuPage() {
 
       <nav aria-label="Categorias" className="sticky top-0 z-20 border-b bg-background/95 backdrop-blur">
         <div className="mx-auto flex max-w-xl gap-2 overflow-x-auto px-5 py-3">
+          <button
+            type="button"
+            onClick={() => setActiveCategory("all")}
+            aria-pressed={activeCategory === "all"}
+            className={cn(
+              "shrink-0 rounded-full border px-4 py-2 text-sm font-medium transition",
+              activeCategory === "all" ? "bg-primary text-primary-foreground" : "hover:bg-secondary",
+            )}
+          >
+            Todos
+          </button>
           {menu.categories.map((category) => (
-            <a
+            <button
               key={category.id}
-              href={`#cat-${category.id}`}
-              className="shrink-0 rounded-full border px-4 py-2 text-sm font-medium hover:bg-secondary"
+              type="button"
+              onClick={() => setActiveCategory(category.id)}
+              aria-pressed={activeCategory === category.id}
+              className={cn(
+                "shrink-0 rounded-full border px-4 py-2 text-sm font-medium transition",
+                activeCategory === category.id ? "bg-primary text-primary-foreground" : "hover:bg-secondary",
+              )}
             >
               {category.name}
-            </a>
+            </button>
           ))}
         </div>
       </nav>
 
       <main className="mx-auto max-w-xl px-5">
-        {menu.categories.map((category) => (
+        {visibleCategories.map((category) => (
           <section key={category.id} id={`cat-${category.id}`} className="scroll-mt-20 py-8">
+
             <h2 className="text-lg font-semibold">{category.name}</h2>
             <ul className="mt-4 space-y-3">
               {(category.products ?? []).map((product) => (
@@ -290,6 +333,42 @@ function MenuPage() {
 
               <Separator className="my-5" />
 
+              <div className="grid gap-3">
+                <div>
+                  <label htmlFor="customer-name" className="text-sm font-medium">
+                    Nome <span className="text-muted-foreground">(opcional)</span>
+                  </label>
+                  <Input
+                    id="customer-name"
+                    value={customerName}
+                    onChange={(event) => setCustomerName(event.target.value)}
+                    placeholder="Como quer ser chamado no balcão"
+                    className="mt-1 h-12"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="customer-cpf" className="text-sm font-medium">
+                    CPF <span className="text-primary">*</span>
+                  </label>
+                  <Input
+                    id="customer-cpf"
+                    value={cpf}
+                    inputMode="numeric"
+                    autoComplete="off"
+                    onChange={(event) => setCpf(maskCpf(event.target.value))}
+                    placeholder="000.000.000-00"
+                    aria-invalid={cpf.length > 0 && !cpfOk}
+                    className="mt-1 h-12"
+                  />
+                  {cpf.length > 0 && !cpfOk && (
+                    <p className="mt-1 text-xs text-destructive">CPF inválido — confira os números.</p>
+                  )}
+                </div>
+              </div>
+
+              <Separator className="my-5" />
+
+
               <fieldset>
                 <legend className="text-sm font-medium">Forma de pagamento</legend>
                 <div className="mt-3 grid gap-2">
@@ -339,16 +418,23 @@ function MenuPage() {
 
               <Button
                 className="mt-4 h-14 w-full text-base"
-                disabled={mutation.isPending || lines.length === 0 || closed}
+                disabled={mutation.isPending || lines.length === 0 || closed || !cpfOk}
                 onClick={() => mutation.mutate()}
               >
-                {closed ? "Fechado agora" : mutation.isPending ? "Criando pedido…" : "Ir para o pagamento"}
+                {closed
+                  ? "Fechado agora"
+                  : !cpfOk
+                    ? "Informe seu CPF para continuar"
+                    : mutation.isPending
+                      ? "Criando pedido…"
+                      : "Ir para o pagamento"}
               </Button>
               <p className="mt-3 text-center text-xs text-muted-foreground">
                 {closed
                   ? openState?.closed_message ?? "Os pedidos reabrem no próximo horário de funcionamento."
-                  : "Sem cadastro. Você receberá um QR Code para retirar seus produtos."}
+                  : "Sem cadastro. O CPF serve para o balcão achar seu pedido caso você fique sem celular."}
               </p>
+
 
             </div>
           </div>

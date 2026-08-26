@@ -10,10 +10,12 @@ import { Button } from "@/components/ui/button";
 import { useEstablishment } from "@/lib/admin-db";
 import {
   ownerFetchVoucher,
+  ownerFindOrdersByDocument,
   ownerListOpenOrders,
   ownerRegisterPickup,
-  ownerSetItemStatusByCode,
+  ownerSetReadyQuantity,
 } from "@/lib/owner-pickup.functions";
+
 
 
 export const Route = createFileRoute("/_authenticated/admin/retirada")({
@@ -25,7 +27,8 @@ function PickupPage() {
   const queryClient = useQueryClient();
   const lookup = useServerFn(ownerFetchVoucher);
   const pickup = useServerFn(ownerRegisterPickup);
-  const markReady = useServerFn(ownerSetItemStatusByCode);
+  const setReady = useServerFn(ownerSetReadyQuantity);
+  const findByCpf = useServerFn(ownerFindOrdersByDocument);
   const listOpen = useServerFn(ownerListOpenOrders);
   const [openRequest, setOpenRequest] = useState<{ code: string; nonce: number } | null>(null);
 
@@ -51,14 +54,15 @@ function PickupPage() {
       <OrderQueue
         scope="owner"
         onList={() => listOpen()}
-        onSetItemStatus={(code, itemId, status) => markReady({ data: { code, itemId, status } })}
+        onSetReadyQuantity={(code, itemId, quantity) => setReady({ data: { code, itemId, quantity } })}
         onOpenOrder={(code) => setOpenRequest({ code, nonce: Date.now() })}
       />
 
       <PickupConsole
         onLookup={(code) => lookup({ data: { code } })}
         onRegister={(code, items) => pickup({ data: { code, items } })}
-        onMarkReady={(code, itemId) => markReady({ data: { code, itemId, status: "pronto" } })}
+        onSetReadyQuantity={(code, itemId, quantity) => setReady({ data: { code, itemId, quantity } })}
+        onFindByDocument={(document) => findByCpf({ data: { document } })}
         openRequest={openRequest}
         onChanged={() => void queryClient.invalidateQueries({ queryKey: ["order-queue", "owner"] })}
       />

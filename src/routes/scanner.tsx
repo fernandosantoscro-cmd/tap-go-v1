@@ -14,20 +14,23 @@ import { supabase } from "@/integrations/supabase/client";
 import { STAFF_ROLE_LABEL } from "@/lib/format";
 import {
   ownerFetchVoucher,
+  ownerFindOrdersByDocument,
   ownerListOpenOrders,
   ownerRegisterPickup,
-  ownerSetItemStatusByCode,
+  ownerSetReadyQuantity,
 } from "@/lib/owner-pickup.functions";
 import {
   registerPickup,
+  staffFindOrdersByDocument,
   staffGetOrder,
   staffListOpenOrders,
-  staffLogin,
-  staffSetItemStatus,
+  staffLoginByCode,
+  staffSetReadyQuantity,
 } from "@/lib/tapgo.functions";
 import type { StaffSession } from "@/lib/tapgo-types";
 
 const PIN_KEY = "tapgo.staff.pin";
+const CODE_KEY = "tapgo.staff.code";
 const SESSION_KEY = "tapgo.staff.session";
 
 export const Route = createFileRoute("/scanner")({
@@ -54,6 +57,7 @@ export const Route = createFileRoute("/scanner")({
 
 function clearStaffStorage() {
   localStorage.removeItem(PIN_KEY);
+  localStorage.removeItem(CODE_KEY);
   localStorage.removeItem(SESSION_KEY);
 }
 
@@ -64,13 +68,15 @@ function ScannerPage() {
 
 
 
-  const login = useServerFn(staffLogin);
+  const login = useServerFn(staffLoginByCode);
   const lookupStaff = useServerFn(staffGetOrder);
   const pickupStaff = useServerFn(registerPickup);
-  const readyStaff = useServerFn(staffSetItemStatus);
+  const readyStaff = useServerFn(staffSetReadyQuantity);
+  const findStaff = useServerFn(staffFindOrdersByDocument);
   const lookupOwner = useServerFn(ownerFetchVoucher);
   const pickupOwner = useServerFn(ownerRegisterPickup);
-  const readyOwner = useServerFn(ownerSetItemStatusByCode);
+  const readyOwner = useServerFn(ownerSetReadyQuantity);
+  const findOwner = useServerFn(ownerFindOrdersByDocument);
   const listOwner = useServerFn(ownerListOpenOrders);
   const listStaff = useServerFn(staffListOpenOrders);
   const queryClient = useQueryClient();
@@ -80,6 +86,7 @@ function ScannerPage() {
   const [owner, setOwner] = useState<{ name: string } | null>(null);
   const [pin, setPin] = useState("");
   const [pinInput, setPinInput] = useState("");
+  const [codeInput, setCodeInput] = useState("");
   const [session, setSession] = useState<StaffSession | null>(null);
   const bootstrapped = useRef(false);
   const [embedded, setEmbedded] = useState(false);
@@ -88,31 +95,30 @@ function ScannerPage() {
     if (typeof window !== "undefined") setEmbedded(window.self !== window.top);
   }, []);
 
-
-
   const loginMutation = useMutation({
-    mutationFn: (value: string) => login({ data: { pin: value } }),
-    onSuccess: (data, value) => {
-      if (!data) {
+    mutationFn: (input: { code: string; pin: string }) => login({ data: input }),
+    onSuccess: (result, input) => {
+      if (!result.session) {
         setMode("login");
-        toast.error("PIN inválido ou desativado. Confira em Painel > Equipe.");
+        toast.error(result.error ?? "Código ou PIN inválido. Confira em Painel > Equipe.");
         return;
       }
-      localStorage.setItem(PIN_KEY, value);
-      localStorage.setItem(SESSION_KEY, JSON.stringify(data));
-      setPin(value);
-      setSession(data);
+      localStorage.setItem(PIN_KEY, input.pin);
+      localStorage.setItem(CODE_KEY, input.code);
+      localStorage.setItem(SESSION_KEY, JSON.stringify(result.session));
+      setPin(input.pin);
+      setSession(result.session);
       setMode("pin");
       if (pinFromUrl) void navigate({ to: "/scanner", search: {}, replace: true });
-      toast.success(`Olá, ${data.name}`);
+      toast.success(`Olá, ${result.session.name}`);
     },
     onError: (error: Error) => {
       setMode("login");
-      toast.error(error.message || "Não foi possível validar o PIN");
+      toast.error(error.message || "Não foi possível validar o acesso");
     },
   });
 
-  // Decide o modo: dono logado entra direto; senão revalida o PIN salvo/do link.
+  // Decide o modo: dono logado entra direto; senão revalida código + PIN salvos.
   useEffect(() => {
     if (bootstrapped.current) return;
     bootstrapped.current = true;
@@ -130,30 +136,28 @@ function ScannerPage() {
         return;
       }
 
-      const urlPin = pinFromUrl;
+      const savedCode = localStorage.getItem(CODE_KEY) ?? "";
+      const savedPin = pinFromUrl ?? localStorage.getItem(PIN_KEY) ?? "";
 
-      if (urlPin && urlPin.length >= 4) {
-        loginMutation.mutate(urlPin);
-        return;
-      }
-
-
-      const savedPin = localStorage.getItem(PIN_KEY);
-      if (!savedPin) {
+      if (savedCode) setCodeInput(savedCode);
+      if (!savedCode || savedPin.length < 4) {
+        if (savedPin) setPinInput(savedPin);
         setMode("login");
         return;
       }
-      const revalidated = await login({ data: { pin: savedPin } });
+
+      const revalidated = await login({ data: { code: savedCode, pin: savedPin } });
       if (!active) return;
-      if (!revalidated) {
+      if (!revalidated.session) {
         clearStaffStorage();
+        setCodeInput(savedCode);
         setMode("login");
-        toast.error("Sua sessão do balcão expirou. Informe o PIN novamente.");
+        toast.error("Sua sessão do balcão expirou. Informe o código e o PIN novamente.");
         return;
       }
-      localStorage.setItem(SESSION_KEY, JSON.stringify(revalidated));
+      localStorage.setItem(SESSION_KEY, JSON.stringify(revalidated.session));
       setPin(savedPin);
-      setSession(revalidated);
+      setSession(revalidated.session);
       setMode("pin");
     })();
     return () => {
@@ -161,6 +165,7 @@ function ScannerPage() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
 
   if (mode === "loading") {
     return (
@@ -177,18 +182,31 @@ function ScannerPage() {
           className="w-full max-w-sm rounded-3xl border bg-background p-8"
           onSubmit={(event) => {
             event.preventDefault();
-            loginMutation.mutate(pinInput);
+            loginMutation.mutate({ code: codeInput.trim(), pin: pinInput });
           }}
         >
           <ScanLine className="size-7 text-primary" aria-hidden />
-          <h1 className="mt-5 text-2xl font-semibold">Balcão do atendente</h1>
+          <h1 className="mt-5 text-2xl font-semibold">Sou funcionário</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Esta tela é só para quem trabalha no balcão. Você não precisa de conta nem senha: use o PIN do seu
-            estande, entregue pelo dono do estabelecimento.
+            Você não precisa de conta nem senha. Informe o código do estabelecimento e o seu PIN individual — os dois
+            ficam no Painel &gt; Equipe do dono.
           </p>
 
           <div className="mt-6">
-            <Label htmlFor="pin">PIN</Label>
+            <Label htmlFor="establishment-code">Código do estabelecimento</Label>
+            <Input
+              id="establishment-code"
+              value={codeInput}
+              onChange={(event) => setCodeInput(event.target.value.toUpperCase().slice(0, 12))}
+              autoComplete="off"
+              placeholder="EX: BAR7K2"
+              className="mt-1 text-center text-lg tracking-[0.3em] uppercase"
+              required
+            />
+          </div>
+
+          <div className="mt-4">
+            <Label htmlFor="pin">Seu PIN</Label>
             <Input
               id="pin"
               value={pinInput}
@@ -201,14 +219,12 @@ function ScannerPage() {
             />
           </div>
           <Button type="submit" className="mt-5 h-12 w-full" disabled={loginMutation.isPending}>
-            {loginMutation.isPending ? "Validando…" : "Entrar"}
+            {loginMutation.isPending ? "Validando…" : "Entrar na operação"}
           </Button>
-          <p className="mt-4 text-center text-xs text-muted-foreground">
-            O PIN é emitido pela conta do estabelecimento em Painel &gt; Equipe.
-          </p>
           <Button asChild variant="link" className="mt-2 w-full text-xs">
-            <Link to="/auth">Sou o dono — entrar com login</Link>
+            <Link to="/acessar">Voltar — sou dono do estabelecimento</Link>
           </Button>
+
         </form>
       </div>
     );
@@ -290,13 +306,14 @@ function ScannerPage() {
               <OrderQueue
                 scope="owner"
                 onList={() => listOwner()}
-                onSetItemStatus={(code, itemId, status) => readyOwner({ data: { code, itemId, status } })}
+                onSetReadyQuantity={(code, itemId, quantity) => readyOwner({ data: { code, itemId, quantity } })}
                 onOpenOrder={(code) => setOpenRequest({ code, nonce: Date.now() })}
               />
               <PickupConsole
                 onLookup={(code) => lookupOwner({ data: { code } })}
                 onRegister={(code, items) => pickupOwner({ data: { code, items } })}
-                onMarkReady={(code, itemId) => readyOwner({ data: { code, itemId, status: "pronto" } })}
+                onSetReadyQuantity={(code, itemId, quantity) => readyOwner({ data: { code, itemId, quantity } })}
+                onFindByDocument={(document) => findOwner({ data: { document } })}
                 openRequest={openRequest}
                 onChanged={() => void queryClient.invalidateQueries({ queryKey: ["order-queue", "owner"] })}
               />
@@ -306,7 +323,7 @@ function ScannerPage() {
               <OrderQueue
                 scope={`pin:${pin}`}
                 onList={() => listStaff({ data: { pin } })}
-                onSetItemStatus={(code, itemId, status) => readyStaff({ data: { pin, code, itemId, status } })}
+                onSetReadyQuantity={(code, itemId, quantity) => readyStaff({ data: { pin, code, itemId, quantity } })}
                 onOpenOrder={(code) => setOpenRequest({ code, nonce: Date.now() })}
               />
               <PickupConsole
@@ -315,7 +332,8 @@ function ScannerPage() {
                   const voucher = await pickupStaff({ data: { pin, code, items } });
                   return { voucher, error: voucher ? null : "Não foi possível registrar a retirada" };
                 }}
-                onMarkReady={(code, itemId) => readyStaff({ data: { pin, code, itemId, status: "pronto" } })}
+                onSetReadyQuantity={(code, itemId, quantity) => readyStaff({ data: { pin, code, itemId, quantity } })}
+                onFindByDocument={(document) => findStaff({ data: { pin, document } })}
                 openRequest={openRequest}
                 onChanged={() => void queryClient.invalidateQueries({ queryKey: ["order-queue", `pin:${pin}`] })}
               />

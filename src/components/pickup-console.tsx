@@ -9,9 +9,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { maskCpf, onlyDigits } from "@/lib/cpf";
 import { formatBRL, ORDER_STATUS_LABEL } from "@/lib/format";
 import type { VoucherItem, VoucherPayload } from "@/lib/tapgo-types";
-import { isReadyForPickup, kitchenItemLabel } from "@/lib/voucher-groups";
+import { kitchenItemLabel } from "@/lib/voucher-groups";
 
 export interface PickupResult {
   voucher: VoucherPayload | null;
@@ -23,8 +24,10 @@ export interface PickupConsoleProps {
   onLookup: (code: string) => Promise<PickupResult>;
   /** Registra a retirada das quantidades selecionadas. */
   onRegister: (code: string, items: { item_id: string; quantity: number }[]) => Promise<PickupResult>;
-  /** Marca um item da cozinha como pronto (opcional). */
-  onMarkReady?: (code: string, itemId: string) => Promise<{ error: string | null }>;
+  /** Libera uma quantidade do item como pronta (valor absoluto). */
+  onSetReadyQuantity?: (code: string, itemId: string, quantity: number) => Promise<{ error: string | null }>;
+  /** Busca pedidos ativos pelo CPF, quando o cliente está sem o QR Code. */
+  onFindByDocument?: (document: string) => Promise<{ orders: VoucherPayload[]; error: string | null }>;
   /** Abre um pedido vindo da fila, sem escanear. */
   openRequest?: { code: string; nonce: number } | null;
   /** Avisa o pai quando a retirada muda o pedido (para atualizar a fila). */
@@ -32,12 +35,22 @@ export interface PickupConsoleProps {
 }
 
 /** Console de leitura e retirada usado pelo dono (painel) e pelo funcionário (balcão). */
-export function PickupConsole({ onLookup, onRegister, onMarkReady, openRequest, onChanged }: PickupConsoleProps) {
+export function PickupConsole({
+  onLookup,
+  onRegister,
+  onSetReadyQuantity,
+  onFindByDocument,
+  openRequest,
+  onChanged,
+}: PickupConsoleProps) {
   const [voucher, setVoucher] = useState<VoucherPayload | null>(null);
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [manualCode, setManualCode] = useState("");
+  const [cpfInput, setCpfInput] = useState("");
+  const [matches, setMatches] = useState<VoucherPayload[] | null>(null);
   const [feedback, setFeedback] = useState<ScanFeedback>(null);
   const [frame, setFrame] = useState<"idle" | "success" | "error">("idle");
+
 
 
   function applyVoucher(data: VoucherPayload) {
@@ -46,7 +59,7 @@ export function PickupConsole({ onLookup, onRegister, onMarkReady, openRequest, 
       Object.fromEntries(
         data.items.map((item) => [
           item.id,
-          isReadyForPickup(item) && item.available_quantity > 0 ? item.available_quantity : 0,
+          item.available_quantity > 0 ? item.available_quantity : 0,
         ]),
       ),
     );
@@ -102,18 +115,43 @@ export function PickupConsole({ onLookup, onRegister, onMarkReady, openRequest, 
   });
 
   const readyMutation = useMutation({
-    mutationFn: (payload: { code: string; itemId: string }) =>
-      onMarkReady!(payload.code, payload.itemId).then(async (res) => {
+    mutationFn: (payload: { code: string; itemId: string; quantity: number }) =>
+      onSetReadyQuantity!(payload.code, payload.itemId, payload.quantity).then(async (res) => {
         if (res.error) throw new Error(res.error);
         return onLookup(payload.code);
       }),
     onSuccess: (result) => {
       if (result.voucher) applyVoucher(result.voucher);
       onChanged?.();
-      toast.success("Item marcado como pronto");
+      toast.success("Quantidade liberada para retirada");
     },
-    onError: (error: Error) => toast.error(error.message || "Falha ao marcar como pronto"),
+    onError: (error: Error) => toast.error(error.message || "Falha ao liberar a quantidade"),
   });
+
+  const findMutation = useMutation({
+    mutationFn: (value: string) => onFindByDocument!(value),
+    onSuccess: (result) => {
+      if (result.error) {
+        fail(result.error);
+        return;
+      }
+      if (result.orders.length === 0) {
+        toast.error("Nenhum pedido ativo para este CPF.");
+        setMatches([]);
+        return;
+      }
+      if (result.orders.length === 1) {
+        applyVoucher(result.orders[0]!);
+        setMatches(null);
+        playScanCue("success");
+        toast.success(`Pedido ${result.orders[0]!.order.code} encontrado`);
+        return;
+      }
+      setMatches(result.orders);
+    },
+    onError: (error: Error) => fail(error.message || "Falha ao buscar pelo CPF"),
+  });
+
 
   const handleDetected = useCallback(
     (raw: string) => {
@@ -133,21 +171,23 @@ export function PickupConsole({ onLookup, onRegister, onMarkReady, openRequest, 
   }, [openRequest]);
 
   const totalSelected = Object.values(quantities).reduce((sum, quantity) => sum + quantity, 0);
-  const allDelivered = voucher?.items.every((item) => item.available_quantity === 0) ?? false;
+  const allDelivered = voucher?.items.every((item) => item.remaining_quantity === 0) ?? false;
   const paidAt = voucher?.order.paid_at ?? null;
 
   function renderRow(item: VoucherItem) {
-    const done = item.available_quantity === 0;
-    const ready = isReadyForPickup(item);
+    const done = item.remaining_quantity === 0;
     return (
       <li key={item.id} className="flex flex-wrap items-center gap-3 rounded-xl border p-3">
         <span aria-hidden className="text-2xl">
           {item.emoji ?? (item.requires_prep ? "🍽️" : "🍸")}
         </span>
         <div className="min-w-0 flex-1">
-          <p className="font-medium">{item.name}</p>
+          <p className="font-medium">
+            {item.quantity}× {item.name}
+          </p>
           <p className="text-xs text-muted-foreground">
-            {item.available_quantity} de {item.quantity} disponível
+            {item.available_quantity} pronta(s) · {item.preparing_quantity} em preparo · {item.delivered_quantity}{" "}
+            retirada(s)
             {item.requires_prep ? ` · ${kitchenItemLabel(item, paidAt)}` : ""}
           </p>
         </div>
@@ -182,26 +222,45 @@ export function PickupConsole({ onLookup, onRegister, onMarkReady, openRequest, 
             </Button>
           </div>
         )}
-        {!done && !ready && (
+        {!done && item.preparing_quantity > 0 && (
           <>
             <Badge variant="outline" className="ml-1 shrink-0">
-              Em preparo
+              {item.preparing_quantity} em preparo
             </Badge>
-            {onMarkReady && voucher && (
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={readyMutation.isPending}
-                onClick={() => readyMutation.mutate({ code: voucher.order.code, itemId: item.id })}
-              >
-                Marcar pronto
-              </Button>
+            {onSetReadyQuantity && voucher && (
+              <div className="flex gap-1">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={readyMutation.isPending}
+                  onClick={() =>
+                    readyMutation.mutate({
+                      code: voucher.order.code,
+                      itemId: item.id,
+                      quantity: item.ready_quantity + 1,
+                    })
+                  }
+                >
+                  Liberar +1
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={readyMutation.isPending}
+                  onClick={() =>
+                    readyMutation.mutate({ code: voucher.order.code, itemId: item.id, quantity: item.quantity })
+                  }
+                >
+                  Liberar tudo
+                </Button>
+              </div>
             )}
           </>
         )}
       </li>
     );
   }
+
 
   const counterItems = (voucher?.items ?? []).filter((item) => !item.requires_prep);
   const kitchenItems = (voucher?.items ?? []).filter((item) => item.requires_prep);
@@ -229,6 +288,57 @@ export function PickupConsole({ onLookup, onRegister, onMarkReady, openRequest, 
             Buscar
           </Button>
         </form>
+
+        {onFindByDocument && (
+          <div className="mt-4 rounded-xl border border-dashed p-4">
+            <p className="text-sm font-medium">Cliente sem o QR Code?</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Busque o pedido pelo CPF informado no pagamento.
+            </p>
+            <form
+              className="mt-3 flex gap-2"
+              onSubmit={(event) => {
+                event.preventDefault();
+                const digits = onlyDigits(cpfInput);
+                if (digits.length !== 11) {
+                  toast.error("Digite os 11 números do CPF.");
+                  return;
+                }
+                findMutation.mutate(digits);
+              }}
+            >
+              <Input
+                value={cpfInput}
+                onChange={(event) => setCpfInput(maskCpf(event.target.value))}
+                placeholder="000.000.000-00"
+                inputMode="numeric"
+                aria-label="CPF do cliente"
+              />
+              <Button type="submit" variant="outline" disabled={findMutation.isPending}>
+                {findMutation.isPending ? "Buscando…" : "Buscar pedido"}
+              </Button>
+            </form>
+            {matches && matches.length > 1 && (
+              <ul className="mt-3 space-y-2">
+                {matches.map((entry) => (
+                  <li key={entry.order.code}>
+                    <Button
+                      variant="secondary"
+                      className="w-full justify-between"
+                      onClick={() => {
+                        applyVoucher(entry);
+                        setMatches(null);
+                      }}
+                    >
+                      <span className="font-display tracking-[0.2em]">{entry.order.code}</span>
+                      <span>{formatBRL(entry.order.total_cents)}</span>
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
       </section>
 
       <section>
@@ -237,6 +347,7 @@ export function PickupConsole({ onLookup, onRegister, onMarkReady, openRequest, 
             {loadMutation.isPending ? "Consultando voucher…" : "Nenhum voucher lido ainda."}
           </div>
         ) : (
+
           <div className="rounded-2xl border bg-background p-6">
             <div className="flex items-start justify-between gap-3">
               <div>
