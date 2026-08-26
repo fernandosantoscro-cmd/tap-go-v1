@@ -98,6 +98,19 @@ function VoucherPage() {
     typeof window === "undefined" ? `/voucher/${code}` : `${window.location.origin}/voucher/${code}`;
   const [busy, setBusy] = useState<"share" | "download" | null>(null);
 
+  const prepMutation = useMutation({
+    mutationFn: async (payload: { itemId: string; quantity: number; name: string }) => {
+      await requestPrep({ data: { code, itemId: payload.itemId, quantity: payload.quantity } });
+      return payload;
+    },
+    onSuccess: (payload) => {
+      toast.success(`Preparo solicitado: ${payload.quantity}× ${payload.name}`);
+      void refetch();
+    },
+    onError: (error: Error) => toast.error(error.message || "Não foi possível solicitar o preparo"),
+  });
+
+
   async function handleReceipt(action: "share" | "download") {
     setBusy(action);
     try {
