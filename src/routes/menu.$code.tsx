@@ -6,11 +6,15 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { isValidCpf, maskCpf, onlyDigits } from "@/lib/cpf";
 import { formatBRL } from "@/lib/format";
+import { rememberOrder } from "@/lib/my-orders";
 import { createOrder, fetchMenu } from "@/lib/tapgo.functions";
 import type { MenuPayload, MenuProduct } from "@/lib/tapgo-types";
 import { cn } from "@/lib/utils";
+
 
 export const Route = createFileRoute("/menu/$code")({
   loader: async ({ params }) => {
