@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { lovable } from "@/integrations/lovable";
 import { supabase } from "@/integrations/supabase/client";
-import { SIGNUP_KEY } from "@/lib/admin-db";
+import { SETUP_PENDING_KEY, SIGNUP_KEY } from "@/lib/admin-db";
 
 
 export const Route = createFileRoute("/auth")({
