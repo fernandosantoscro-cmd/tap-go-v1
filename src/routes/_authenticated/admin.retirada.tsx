@@ -13,6 +13,7 @@ import {
   ownerFindOrdersByDocument,
   ownerListOpenOrders,
   ownerRegisterPickup,
+  ownerSetItemStatusByCode,
   ownerSetReadyQuantity,
 } from "@/lib/owner-pickup.functions";
 
@@ -30,6 +31,7 @@ function PickupPage() {
   const setReady = useServerFn(ownerSetReadyQuantity);
   const findByCpf = useServerFn(ownerFindOrdersByDocument);
   const listOpen = useServerFn(ownerListOpenOrders);
+  const acceptPrep = useServerFn(ownerSetItemStatusByCode);
   const [openRequest, setOpenRequest] = useState<{ code: string; nonce: number } | null>(null);
 
   return (
@@ -55,6 +57,7 @@ function PickupPage() {
         scope="owner"
         onList={() => listOpen()}
         onSetReadyQuantity={(code, itemId, quantity) => setReady({ data: { code, itemId, quantity } })}
+        onAcceptPrep={(code, itemId) => acceptPrep({ data: { code, itemId, status: "preparando" } })}
         onOpenOrder={(code) => setOpenRequest({ code, nonce: Date.now() })}
       />
 

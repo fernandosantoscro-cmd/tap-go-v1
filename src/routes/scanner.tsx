@@ -307,6 +307,7 @@ function ScannerPage() {
                 scope="owner"
                 onList={() => listOwner()}
                 onSetReadyQuantity={(code, itemId, quantity) => readyOwner({ data: { code, itemId, quantity } })}
+                onAcceptPrep={(code, itemId) => acceptOwner({ data: { code, itemId, status: "preparando" } })}
                 onOpenOrder={(code) => setOpenRequest({ code, nonce: Date.now() })}
               />
               <PickupConsole
@@ -324,6 +325,7 @@ function ScannerPage() {
                 scope={`pin:${pin}`}
                 onList={() => listStaff({ data: { pin } })}
                 onSetReadyQuantity={(code, itemId, quantity) => readyStaff({ data: { pin, code, itemId, quantity } })}
+                onAcceptPrep={(code, itemId) => acceptStaff({ data: { pin, code, itemId, status: "preparando" } })}
                 onOpenOrder={(code) => setOpenRequest({ code, nonce: Date.now() })}
               />
               <PickupConsole
