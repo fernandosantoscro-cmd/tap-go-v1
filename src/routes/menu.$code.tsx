@@ -339,16 +339,23 @@ function MenuPage() {
 
               <Button
                 className="mt-4 h-14 w-full text-base"
-                disabled={mutation.isPending || lines.length === 0 || closed}
+                disabled={mutation.isPending || lines.length === 0 || closed || !cpfOk}
                 onClick={() => mutation.mutate()}
               >
-                {closed ? "Fechado agora" : mutation.isPending ? "Criando pedido…" : "Ir para o pagamento"}
+                {closed
+                  ? "Fechado agora"
+                  : !cpfOk
+                    ? "Informe seu CPF para continuar"
+                    : mutation.isPending
+                      ? "Criando pedido…"
+                      : "Ir para o pagamento"}
               </Button>
               <p className="mt-3 text-center text-xs text-muted-foreground">
                 {closed
                   ? openState?.closed_message ?? "Os pedidos reabrem no próximo horário de funcionamento."
-                  : "Sem cadastro. Você receberá um QR Code para retirar seus produtos."}
+                  : "Sem cadastro. O CPF serve para o balcão achar seu pedido caso você fique sem celular."}
               </p>
+
 
             </div>
           </div>
