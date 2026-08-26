@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AcessarRouteImport } from './routes/acessar'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as MeusPedidosRouteImport } from './routes/meus-pedidos'
 import { Route as ScannerRouteImport } from './routes/scanner'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as MenuCodeRouteImport } from './routes/menu.$code'
@@ -46,6 +47,11 @@ const AcessarRoute = AcessarRouteImport.update({
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MeusPedidosRoute = MeusPedidosRouteImport.update({
+  id: '/meus-pedidos',
+  path: '/meus-pedidos',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ScannerRoute = ScannerRouteImport.update({
@@ -137,6 +143,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/acessar': typeof AcessarRoute
   '/auth': typeof AuthRoute
+  '/meus-pedidos': typeof MeusPedidosRoute
   '/scanner': typeof ScannerRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/menu/$code': typeof MenuCodeRoute
@@ -157,6 +164,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/acessar': typeof AcessarRoute
   '/auth': typeof AuthRoute
+  '/meus-pedidos': typeof MeusPedidosRoute
   '/scanner': typeof ScannerRoute
   '/menu/$code': typeof MenuCodeRoute
   '/pagamento/$code': typeof PagamentoCodeRoute
@@ -178,6 +186,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/acessar': typeof AcessarRoute
   '/auth': typeof AuthRoute
+  '/meus-pedidos': typeof MeusPedidosRoute
   '/scanner': typeof ScannerRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/menu/$code': typeof MenuCodeRoute
@@ -200,6 +209,7 @@ export interface FileRouteTypes {
     | '/'
     | '/acessar'
     | '/auth'
+    | '/meus-pedidos'
     | '/scanner'
     | '/admin'
     | '/menu/$code'
@@ -220,6 +230,7 @@ export interface FileRouteTypes {
     | '/'
     | '/acessar'
     | '/auth'
+    | '/meus-pedidos'
     | '/scanner'
     | '/menu/$code'
     | '/pagamento/$code'
@@ -240,6 +251,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/acessar'
     | '/auth'
+    | '/meus-pedidos'
     | '/scanner'
     | '/_authenticated/admin'
     | '/menu/$code'
@@ -262,6 +274,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AcessarRoute: typeof AcessarRoute
   AuthRoute: typeof AuthRoute
+  MeusPedidosRoute: typeof MeusPedidosRoute
   ScannerRoute: typeof ScannerRoute
   MenuCodeRoute: typeof MenuCodeRoute
   PagamentoCodeRoute: typeof PagamentoCodeRoute
@@ -296,6 +309,13 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/meus-pedidos': {
+      id: '/meus-pedidos'
+      path: '/meus-pedidos'
+      fullPath: '/meus-pedidos'
+      preLoaderRoute: typeof MeusPedidosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/scanner': {
@@ -452,6 +472,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AcessarRoute: AcessarRoute,
   AuthRoute: AuthRoute,
+  MeusPedidosRoute: MeusPedidosRoute,
   ScannerRoute: ScannerRoute,
   MenuCodeRoute: MenuCodeRoute,
   PagamentoCodeRoute: PagamentoCodeRoute,
