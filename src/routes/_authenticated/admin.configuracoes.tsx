@@ -179,7 +179,33 @@ function SettingsPage() {
             <Label htmlFor="set-doc">CNPJ / CPF</Label>
             <Input id="set-doc" className="mt-1" value={document} onChange={(e) => setDocument(e.target.value)} />
           </div>
+          <div>
+            <Label htmlFor="set-im">Inscrição municipal</Label>
+            <Input id="set-im" className="mt-1" value={municipalReg} onChange={(e) => setMunicipalReg(e.target.value)} />
+          </div>
+          <div>
+            <Label htmlFor="set-ie">Inscrição estadual</Label>
+            <Input id="set-ie" className="mt-1" value={stateReg} onChange={(e) => setStateReg(e.target.value)} />
+          </div>
+          <div>
+            <Label htmlFor="set-regime">Regime tributário</Label>
+            <select
+              id="set-regime"
+              className="mt-1 h-10 w-full rounded-md border bg-background px-3 text-sm"
+              value={taxRegime}
+              onChange={(e) => setTaxRegime(e.target.value)}
+            >
+              <option value="simples">Simples Nacional</option>
+              <option value="mei">MEI</option>
+              <option value="presumido">Lucro presumido</option>
+              <option value="real">Lucro real</option>
+            </select>
+          </div>
         </div>
+        <p className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
+          <FileText className="size-3.5" aria-hidden /> Os dados fiscais alimentam a emissão automática de nota nas
+          Integrações abaixo.
+        </p>
       </section>
 
       <section className="rounded-2xl border bg-background p-6">
@@ -249,6 +275,8 @@ function SettingsPage() {
           <Save className="mr-2 size-4" /> {update.isPending ? "Salvando…" : "Salvar configurações"}
         </Button>
       </section>
+
+      <IntegrationsSettings />
 
       <section className="rounded-2xl border bg-background p-6">
         <h2 className="flex items-center gap-2 text-xl font-semibold">
