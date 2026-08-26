@@ -159,3 +159,54 @@ export const staffListOpenOrders = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return (result as OpenOrder[] | null) ?? [];
   });
+
+/** Login do funcionário com código do estabelecimento + PIN individual. */
+export const staffLoginByCode = createServerFn({ method: "POST" })
+  .inputValidator((data: { code: string; pin: string }) => ({
+    code: String(data.code).slice(0, 24),
+    pin: String(data.pin).replace(/\D/g, "").slice(0, 12),
+  }))
+  .handler(async ({ data }): Promise<{ session: StaffSession | null; error: string | null }> => {
+    const { publicDb } = await import("./public-db.server");
+    const { data: result, error } = await publicDb().rpc("staff_login_by_code", {
+      p_code: data.code,
+      p_pin: data.pin,
+    });
+    if (error) return { session: null, error: error.message };
+    return { session: (result as StaffSession | null) ?? null, error: null };
+  });
+
+/** Libera uma quantidade específica do item como pronta para retirada. */
+export const staffSetReadyQuantity = createServerFn({ method: "POST" })
+  .inputValidator((data: { pin: string; code: string; itemId: string; quantity: number }) => ({
+    pin: String(data.pin).slice(0, 12),
+    code: String(data.code).slice(0, 32),
+    itemId: String(data.itemId),
+    quantity: Math.max(0, Math.min(999, Number(data.quantity) || 0)),
+  }))
+  .handler(async ({ data }): Promise<{ error: string | null }> => {
+    const { publicDb } = await import("./public-db.server");
+    const { error } = await publicDb().rpc("staff_set_ready_quantity", {
+      p_pin: data.pin,
+      p_order_code: data.code,
+      p_item_id: data.itemId,
+      p_quantity: data.quantity,
+    });
+    return { error: error ? error.message : null };
+  });
+
+/** Busca pedidos ativos pelo CPF do cliente (fallback sem QR Code). */
+export const staffFindOrdersByDocument = createServerFn({ method: "POST" })
+  .inputValidator((data: { pin: string; document: string }) => ({
+    pin: String(data.pin).slice(0, 12),
+    document: String(data.document).replace(/\D/g, "").slice(0, 11),
+  }))
+  .handler(async ({ data }): Promise<{ orders: VoucherPayload[]; error: string | null }> => {
+    const { publicDb } = await import("./public-db.server");
+    const { data: result, error } = await publicDb().rpc("staff_find_orders_by_document", {
+      p_pin: data.pin,
+      p_document: data.document,
+    });
+    if (error) return { orders: [], error: error.message };
+    return { orders: (result as VoucherPayload[] | null) ?? [], error: null };
+  });
