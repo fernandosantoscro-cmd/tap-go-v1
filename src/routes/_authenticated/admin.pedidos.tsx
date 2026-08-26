@@ -147,6 +147,18 @@ function OrdersPage() {
                   <Badge variant={order.payment_status === "pago" ? "default" : "secondary"} className="mt-1">
                     {order.payment_status === "pago" ? ORDER_STATUS_LABEL[order.status] : "Aguardando pagamento"}
                   </Badge>
+                  {(() => {
+                    const fiscal = (order as unknown as Record<string, unknown>)["fiscal_status"];
+                    if (!fiscal || fiscal === "nenhuma") return null;
+                    return (
+                      <Badge
+                        variant={fiscal === "emitida" ? "outline" : fiscal === "erro" ? "destructive" : "secondary"}
+                        className="mt-1 ml-1"
+                      >
+                        {fiscal === "emitida" ? "NF emitida" : fiscal === "erro" ? "NF com erro" : "NF pendente"}
+                      </Badge>
+                    );
+                  })()}
                 </div>
               </div>
 
@@ -203,6 +215,22 @@ function OrdersPage() {
                   <Button size="sm" variant="outline" onClick={() => changeStatus(order, "entregue")}>
                     <CheckCircle2 className="mr-2 size-4" /> Entregue
                   </Button>
+                  {(order as unknown as Record<string, unknown>)["fiscal_status"] === "erro" && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={reissue.isPending}
+                      onClick={() =>
+                        reissue.mutate(order.code, {
+                          onSuccess: (r) =>
+                            r.issued ? toast.success("Nota fiscal emitida") : toast.error(r.error ?? "Falha ao emitir"),
+                          onError: (e: Error) => toast.error(e.message),
+                        })
+                      }
+                    >
+                      <FileText className="mr-2 size-4" /> Reemitir nota
+                    </Button>
+                  )}
                 </div>
               )}
             </article>
