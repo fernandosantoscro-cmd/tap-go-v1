@@ -139,7 +139,7 @@ export const ownerListOpenOrders = createServerFn({ method: "POST" })
     const { data: rows, error } = await supabase
       .from("orders")
       .select(
-        "code, status, total_cents, paid_at, created_at, customer_name, menus(name), events(name), order_items(id, product_name, emoji, unit_price_cents, quantity, ready_quantity, delivered_quantity, prep_minutes, requires_prep, status, created_at)",
+        "code, status, total_cents, paid_at, created_at, customer_name, menus(name), events(name), order_items(id, product_name, emoji, unit_price_cents, quantity, ready_quantity, requested_quantity, delivered_quantity, prep_minutes, requires_prep, status, created_at)",
       )
       .eq("payment_status", "pago")
       .neq("status", "cancelado")
@@ -173,6 +173,7 @@ export const ownerListOpenOrders = createServerFn({ method: "POST" })
                 unit_price_cents: item.unit_price_cents as number,
                 quantity,
                 ready_quantity: ready,
+                requested_quantity: (item.requested_quantity ?? 0) as number,
                 delivered_quantity: delivered,
                 available_quantity: Math.max(0, ready - delivered),
                 preparing_quantity: Math.max(0, quantity - ready),
