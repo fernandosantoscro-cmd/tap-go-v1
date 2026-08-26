@@ -84,6 +84,7 @@ function ScannerPage() {
   const [owner, setOwner] = useState<{ name: string } | null>(null);
   const [pin, setPin] = useState("");
   const [pinInput, setPinInput] = useState("");
+  const [codeInput, setCodeInput] = useState("");
   const [session, setSession] = useState<StaffSession | null>(null);
   const bootstrapped = useRef(false);
   const [embedded, setEmbedded] = useState(false);
@@ -92,31 +93,30 @@ function ScannerPage() {
     if (typeof window !== "undefined") setEmbedded(window.self !== window.top);
   }, []);
 
-
-
   const loginMutation = useMutation({
-    mutationFn: (value: string) => login({ data: { pin: value } }),
-    onSuccess: (data, value) => {
-      if (!data) {
+    mutationFn: (input: { code: string; pin: string }) => login({ data: input }),
+    onSuccess: (result, input) => {
+      if (!result.session) {
         setMode("login");
-        toast.error("PIN inválido ou desativado. Confira em Painel > Equipe.");
+        toast.error(result.error ?? "Código ou PIN inválido. Confira em Painel > Equipe.");
         return;
       }
-      localStorage.setItem(PIN_KEY, value);
-      localStorage.setItem(SESSION_KEY, JSON.stringify(data));
-      setPin(value);
-      setSession(data);
+      localStorage.setItem(PIN_KEY, input.pin);
+      localStorage.setItem(CODE_KEY, input.code);
+      localStorage.setItem(SESSION_KEY, JSON.stringify(result.session));
+      setPin(input.pin);
+      setSession(result.session);
       setMode("pin");
       if (pinFromUrl) void navigate({ to: "/scanner", search: {}, replace: true });
-      toast.success(`Olá, ${data.name}`);
+      toast.success(`Olá, ${result.session.name}`);
     },
     onError: (error: Error) => {
       setMode("login");
-      toast.error(error.message || "Não foi possível validar o PIN");
+      toast.error(error.message || "Não foi possível validar o acesso");
     },
   });
 
-  // Decide o modo: dono logado entra direto; senão revalida o PIN salvo/do link.
+  // Decide o modo: dono logado entra direto; senão revalida código + PIN salvos.
   useEffect(() => {
     if (bootstrapped.current) return;
     bootstrapped.current = true;
@@ -134,30 +134,28 @@ function ScannerPage() {
         return;
       }
 
-      const urlPin = pinFromUrl;
+      const savedCode = localStorage.getItem(CODE_KEY) ?? "";
+      const savedPin = pinFromUrl ?? localStorage.getItem(PIN_KEY) ?? "";
 
-      if (urlPin && urlPin.length >= 4) {
-        loginMutation.mutate(urlPin);
-        return;
-      }
-
-
-      const savedPin = localStorage.getItem(PIN_KEY);
-      if (!savedPin) {
+      if (savedCode) setCodeInput(savedCode);
+      if (!savedCode || savedPin.length < 4) {
+        if (savedPin) setPinInput(savedPin);
         setMode("login");
         return;
       }
-      const revalidated = await login({ data: { pin: savedPin } });
+
+      const revalidated = await login({ data: { code: savedCode, pin: savedPin } });
       if (!active) return;
-      if (!revalidated) {
+      if (!revalidated.session) {
         clearStaffStorage();
+        setCodeInput(savedCode);
         setMode("login");
-        toast.error("Sua sessão do balcão expirou. Informe o PIN novamente.");
+        toast.error("Sua sessão do balcão expirou. Informe o código e o PIN novamente.");
         return;
       }
-      localStorage.setItem(SESSION_KEY, JSON.stringify(revalidated));
+      localStorage.setItem(SESSION_KEY, JSON.stringify(revalidated.session));
       setPin(savedPin);
-      setSession(revalidated);
+      setSession(revalidated.session);
       setMode("pin");
     })();
     return () => {
@@ -165,6 +163,7 @@ function ScannerPage() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
 
   if (mode === "loading") {
     return (
