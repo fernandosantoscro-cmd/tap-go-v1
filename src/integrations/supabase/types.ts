@@ -59,6 +59,7 @@ export type Database = {
       establishments: {
         Row: {
           accepting_orders: boolean
+          access_code: string
           business_hours: Json
           closed_message: string | null
           created_at: string
@@ -75,6 +76,7 @@ export type Database = {
         }
         Insert: {
           accepting_orders?: boolean
+          access_code: string
           business_hours?: Json
           closed_message?: string | null
           created_at?: string
@@ -91,6 +93,7 @@ export type Database = {
         }
         Update: {
           accepting_orders?: boolean
+          access_code?: string
           business_hours?: Json
           closed_message?: string | null
           created_at?: string
@@ -327,6 +330,7 @@ export type Database = {
           product_id: string | null
           product_name: string
           quantity: number
+          ready_quantity: number
           requires_prep: boolean
           status: Database["public"]["Enums"]["order_status"]
           unit_price_cents: number
@@ -342,6 +346,7 @@ export type Database = {
           product_id?: string | null
           product_name: string
           quantity: number
+          ready_quantity?: number
           requires_prep?: boolean
           status?: Database["public"]["Enums"]["order_status"]
           unit_price_cents: number
@@ -357,6 +362,7 @@ export type Database = {
           product_id?: string | null
           product_name?: string
           quantity?: number
+          ready_quantity?: number
           requires_prep?: boolean
           status?: Database["public"]["Enums"]["order_status"]
           unit_price_cents?: number
@@ -385,6 +391,7 @@ export type Database = {
           id: string
           item_name: string | null
           order_code: string
+          quantity: number
           status: string
         }
         Insert: {
@@ -392,6 +399,7 @@ export type Database = {
           id?: string
           item_name?: string | null
           order_code: string
+          quantity?: number
           status: string
         }
         Update: {
@@ -399,6 +407,7 @@ export type Database = {
           id?: string
           item_name?: string | null
           order_code?: string
+          quantity?: number
           status?: string
         }
         Relationships: []
@@ -408,6 +417,7 @@ export type Database = {
           code: string
           completed_at: string | null
           created_at: string
+          customer_document: string | null
           customer_id: string | null
           customer_name: string | null
           establishment_id: string
@@ -427,6 +437,7 @@ export type Database = {
           code?: string
           completed_at?: string | null
           created_at?: string
+          customer_document?: string | null
           customer_id?: string | null
           customer_name?: string | null
           establishment_id: string
@@ -446,6 +457,7 @@ export type Database = {
           code?: string
           completed_at?: string | null
           created_at?: string
+          customer_document?: string | null
           customer_id?: string | null
           customer_name?: string | null
           establishment_id?: string
@@ -777,6 +789,7 @@ export type Database = {
       }
       create_order: {
         Args: {
+          p_customer_document?: string
           p_customer_name?: string
           p_items: Json
           p_menu_code: string
@@ -802,8 +815,16 @@ export type Database = {
         Returns: Json
       }
       get_voucher: { Args: { p_code: string }; Returns: Json }
+      owner_find_orders_by_document: {
+        Args: { p_document: string; p_establishment_id: string }
+        Returns: Json
+      }
       owner_set_order_status: {
         Args: { p_item_id?: string; p_order_id: string; p_status: string }
+        Returns: Json
+      }
+      owner_set_ready_quantity: {
+        Args: { p_item_id: string; p_order_id: string; p_quantity: number }
         Returns: Json
       }
       owns_establishment: { Args: { p_id: string }; Returns: boolean }
@@ -812,12 +833,29 @@ export type Database = {
         Args: { p_items: Json; p_order_code: string; p_pin: string }
         Returns: Json
       }
+      staff_find_orders_by_document: {
+        Args: { p_document: string; p_pin: string }
+        Returns: Json
+      }
       staff_get_order: {
         Args: { p_order_code: string; p_pin: string }
         Returns: Json
       }
       staff_login: { Args: { p_pin: string }; Returns: Json }
+      staff_login_by_code: {
+        Args: { p_code: string; p_pin: string }
+        Returns: Json
+      }
       staff_open_orders: { Args: { p_pin: string }; Returns: Json }
+      staff_set_ready_quantity: {
+        Args: {
+          p_item_id: string
+          p_order_code: string
+          p_pin: string
+          p_quantity: number
+        }
+        Returns: Json
+      }
       staff_set_status: {
         Args: {
           p_item_id?: string
