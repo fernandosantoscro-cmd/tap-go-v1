@@ -73,6 +73,9 @@ function SettingsPage() {
   const [closedMessage, setClosedMessage] = useState("");
   const [accepting, setAccepting] = useState(true);
   const [hours, setHours] = useState<Record<string, DayHours>>(parseHours(null));
+  const [municipalReg, setMunicipalReg] = useState("");
+  const [stateReg, setStateReg] = useState("");
+  const [taxRegime, setTaxRegime] = useState("simples");
 
   useEffect(() => {
     const data = establishment.data;
@@ -84,6 +87,10 @@ function SettingsPage() {
     setClosedMessage(data.closed_message ?? "");
     setAccepting(data.accepting_orders);
     setHours(parseHours(data.business_hours));
+    const extra = data as unknown as Record<string, unknown>;
+    setMunicipalReg(String(extra["municipal_registration"] ?? ""));
+    setStateReg(String(extra["state_registration"] ?? ""));
+    setTaxRegime(String(extra["tax_regime"] ?? "simples"));
   }, [establishment.data]);
 
   function save() {
@@ -98,7 +105,10 @@ function SettingsPage() {
         closed_message: closedMessage.trim() || null,
         accepting_orders: accepting,
         business_hours: hours as unknown as Record<string, { open: boolean; from: string; to: string }>,
-      },
+        municipal_registration: municipalReg.trim() || null,
+        state_registration: stateReg.trim() || null,
+        tax_regime: taxRegime,
+      } as Parameters<typeof update.mutate>[0],
       {
         onSuccess: () => toast.success("Configurações salvas"),
         onError: (error: Error) => toast.error(error.message),

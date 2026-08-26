@@ -83,6 +83,9 @@ export const confirmPayment = createServerFn({ method: "POST" })
     const db = publicDb();
     const { error } = await db.rpc("confirm_payment", { p_order_code: data.code });
     if (error) throw new Error(error.message);
+    // Dispara integrações (nota fiscal automática + webhook do estabelecimento).
+    const { onPaymentConfirmed } = await import("./integrations.server");
+    await onPaymentConfirmed(data.code).catch(() => undefined);
     const { data: voucher } = await db.rpc("get_voucher", { p_code: data.code });
     return (voucher as VoucherPayload | null) ?? null;
   });
