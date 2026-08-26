@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AcessarRouteImport } from './routes/acessar'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ScannerRouteImport } from './routes/scanner'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
@@ -35,6 +36,11 @@ const IndexRoute = IndexRouteImport.update({
 } as any)
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AcessarRoute = AcessarRouteImport.update({
+  id: '/acessar',
+  path: '/acessar',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -129,6 +135,7 @@ const AuthenticatedAdminCardapiosMenuIdRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/acessar': typeof AcessarRoute
   '/auth': typeof AuthRoute
   '/scanner': typeof ScannerRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
@@ -148,6 +155,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/acessar': typeof AcessarRoute
   '/auth': typeof AuthRoute
   '/scanner': typeof ScannerRoute
   '/menu/$code': typeof MenuCodeRoute
@@ -168,6 +176,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/acessar': typeof AcessarRoute
   '/auth': typeof AuthRoute
   '/scanner': typeof ScannerRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
@@ -189,6 +198,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/acessar'
     | '/auth'
     | '/scanner'
     | '/admin'
@@ -208,6 +218,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/acessar'
     | '/auth'
     | '/scanner'
     | '/menu/$code'
@@ -227,6 +238,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/acessar'
     | '/auth'
     | '/scanner'
     | '/_authenticated/admin'
@@ -248,6 +260,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AcessarRoute: typeof AcessarRoute
   AuthRoute: typeof AuthRoute
   ScannerRoute: typeof ScannerRoute
   MenuCodeRoute: typeof MenuCodeRoute
@@ -269,6 +282,13 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/acessar': {
+      id: '/acessar'
+      path: '/acessar'
+      fullPath: '/acessar'
+      preLoaderRoute: typeof AcessarRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -430,6 +450,7 @@ const AuthenticatedRouteRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AcessarRoute: AcessarRoute,
   AuthRoute: AuthRoute,
   ScannerRoute: ScannerRoute,
   MenuCodeRoute: MenuCodeRoute,
