@@ -127,7 +127,7 @@ export type Database = {
         }
         Insert: {
           accepting_orders?: boolean
-          access_code: string
+          access_code?: string
           business_hours?: Json
           closed_message?: string | null
           created_at?: string
@@ -983,6 +983,10 @@ export type Database = {
         Returns: Json
       }
       establishment_open_state: { Args: { p_id: string }; Returns: Json }
+      gen_establishment_access_code: {
+        Args: { p_seed?: string }
+        Returns: string
+      }
       gen_public_code: { Args: { p_len?: number }; Returns: string }
       gen_unique_staff_pin: { Args: never; Returns: string }
       get_menu_by_code: { Args: { p_code: string }; Returns: Json }
