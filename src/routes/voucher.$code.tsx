@@ -144,25 +144,9 @@ function VoucherPage() {
 
 
   return (
-    <div className="min-h-screen bg-background pb-16">
-      {readyAlert && (
-        <div
-          role="alertdialog"
-          aria-live="assertive"
-          className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-primary px-8 text-center text-primary-foreground animate-fade-in"
-        >
-          <PartyPopper className="size-16 animate-scale-in" aria-hidden />
-          <p className="text-3xl font-semibold leading-tight">{readyAlert.itemName} está pronto!</p>
-          <p className="text-base opacity-80">
-            Vá ao balcão e mostre o QR Code do pedido {voucher.order.code}.
-          </p>
-          <Button variant="secondary" size="lg" className="mt-2" onClick={dismissReady}>
-            Ver QR de retirada
-          </Button>
-        </div>
-      )}
-      <header className="border-b bg-secondary/50">
-        <div className="mx-auto max-w-xl px-5 py-6 text-center">
+    <div className="min-h-screen bg-secondary/20 pb-28">
+      <header>
+        <div className="mx-auto max-w-xl px-5 pb-2 pt-8 text-center">
           <p className="text-xs uppercase tracking-widest text-muted-foreground">
             {voucher.establishment?.name ?? "TapGo"}
           </p>
