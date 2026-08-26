@@ -177,7 +177,21 @@ function PaymentPage() {
           ) : (
             <>
               <div className="mt-6 flex justify-center">
-                <QrCode value={payload} size={220} title="QR Code PIX do pedido" />
+                {realPix && charge?.qr_code_base64 ? (
+                  <img
+                    src={`data:image/png;base64,${charge.qr_code_base64}`}
+                    alt="QR Code PIX do Mercado Pago"
+                    width={220}
+                    height={220}
+                    className="rounded-xl"
+                  />
+                ) : realPix && !charge ? (
+                  <div className="grid size-[220px] place-items-center rounded-xl border">
+                    <Loader2 className="size-8 animate-spin text-muted-foreground" aria-label="Gerando PIX" />
+                  </div>
+                ) : (
+                  <QrCode value={payload} size={220} title="QR Code PIX do pedido" />
+                )}
               </div>
               <p className="mt-4 text-sm text-muted-foreground">
                 Expira em{" "}
@@ -189,19 +203,25 @@ function PaymentPage() {
                 {copied ? <Check className="mr-2 size-4" /> : <Copy className="mr-2 size-4" />}
                 {copied ? "Copiado" : "PIX copia e cola"}
               </Button>
-              <Button
-                className="mt-3 h-14 w-full text-base"
-                disabled={mutation.isPending}
-                onClick={() => mutation.mutate()}
-              >
-                {mutation.isPending ? (
-                  <>
-                    <Loader2 className="mr-2 size-5 animate-spin" /> Confirmando…
-                  </>
-                ) : (
-                  "Já fiz o pagamento"
-                )}
-              </Button>
+              {realPix ? (
+                <p className="mt-4 flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="size-4 animate-spin" aria-hidden /> Aguardando confirmação do banco…
+                </p>
+              ) : (
+                <Button
+                  className="mt-3 h-14 w-full text-base"
+                  disabled={mutation.isPending}
+                  onClick={() => mutation.mutate()}
+                >
+                  {mutation.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 size-5 animate-spin" /> Confirmando…
+                    </>
+                  ) : (
+                    "Já fiz o pagamento"
+                  )}
+                </Button>
+              )}
             </>
           )}
         </div>
@@ -224,7 +244,9 @@ function PaymentPage() {
 
         <p className="mt-8 flex items-center justify-center gap-2 text-xs text-muted-foreground">
           <ShieldCheck className="size-4" aria-hidden />
-          Ambiente de demonstração: nenhum valor real é cobrado.
+          {realPix
+            ? "Pagamento processado pelo Mercado Pago com segurança."
+            : "Ambiente de demonstração: nenhum valor real é cobrado."}
         </p>
       </main>
     </div>
