@@ -56,6 +56,53 @@ export type Database = {
           },
         ]
       }
+      establishment_integrations: {
+        Row: {
+          created_at: string
+          credentials: Json
+          enabled: boolean
+          establishment_id: string
+          id: string
+          last_error: string | null
+          last_status: string | null
+          provider: string
+          settings: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          credentials?: Json
+          enabled?: boolean
+          establishment_id: string
+          id?: string
+          last_error?: string | null
+          last_status?: string | null
+          provider: string
+          settings?: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          credentials?: Json
+          enabled?: boolean
+          establishment_id?: string
+          id?: string
+          last_error?: string | null
+          last_status?: string | null
+          provider?: string
+          settings?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "establishment_integrations_establishment_id_fkey"
+            columns: ["establishment_id"]
+            isOneToOne: false
+            referencedRelation: "establishments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       establishments: {
         Row: {
           accepting_orders: boolean
@@ -64,12 +111,16 @@ export type Database = {
           closed_message: string | null
           created_at: string
           document: string | null
+          fiscal_address: Json | null
           id: string
           logo_url: string | null
+          municipal_registration: string | null
           name: string
           owner_id: string | null
           phone: string | null
           slug: string
+          state_registration: string | null
+          tax_regime: string | null
           timezone: string
           type: string | null
           updated_at: string
@@ -81,12 +132,16 @@ export type Database = {
           closed_message?: string | null
           created_at?: string
           document?: string | null
+          fiscal_address?: Json | null
           id?: string
           logo_url?: string | null
+          municipal_registration?: string | null
           name: string
           owner_id?: string | null
           phone?: string | null
           slug: string
+          state_registration?: string | null
+          tax_regime?: string | null
           timezone?: string
           type?: string | null
           updated_at?: string
@@ -98,12 +153,16 @@ export type Database = {
           closed_message?: string | null
           created_at?: string
           document?: string | null
+          fiscal_address?: Json | null
           id?: string
           logo_url?: string | null
+          municipal_registration?: string | null
           name?: string
           owner_id?: string | null
           phone?: string | null
           slug?: string
+          state_registration?: string | null
+          tax_regime?: string | null
           timezone?: string
           type?: string | null
           updated_at?: string
@@ -159,6 +218,110 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "events_establishment_id_fkey"
+            columns: ["establishment_id"]
+            isOneToOne: false
+            referencedRelation: "establishments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fiscal_documents: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          establishment_id: string
+          id: string
+          number: string | null
+          order_id: string
+          pdf_url: string | null
+          provider: string
+          provider_ref: string | null
+          status: string
+          updated_at: string
+          xml_url: string | null
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          establishment_id: string
+          id?: string
+          number?: string | null
+          order_id: string
+          pdf_url?: string | null
+          provider: string
+          provider_ref?: string | null
+          status?: string
+          updated_at?: string
+          xml_url?: string | null
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          establishment_id?: string
+          id?: string
+          number?: string | null
+          order_id?: string
+          pdf_url?: string | null
+          provider?: string
+          provider_ref?: string | null
+          status?: string
+          updated_at?: string
+          xml_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fiscal_documents_establishment_id_fkey"
+            columns: ["establishment_id"]
+            isOneToOne: false
+            referencedRelation: "establishments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fiscal_documents_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      integration_events: {
+        Row: {
+          created_at: string
+          direction: string
+          error: string | null
+          establishment_id: string | null
+          event_type: string
+          id: string
+          payload: Json
+          provider: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          direction?: string
+          error?: string | null
+          establishment_id?: string | null
+          event_type: string
+          id?: string
+          payload?: Json
+          provider?: string | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          direction?: string
+          error?: string | null
+          establishment_id?: string | null
+          event_type?: string
+          id?: string
+          payload?: Json
+          provider?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "integration_events_establishment_id_fkey"
             columns: ["establishment_id"]
             isOneToOne: false
             referencedRelation: "establishments"
@@ -426,10 +589,12 @@ export type Database = {
           establishment_id: string
           event_id: string | null
           first_pickup_at: string | null
+          fiscal_status: string
           id: string
           menu_id: string | null
           paid_at: string | null
           payment_method: string | null
+          payment_provider_ref: string | null
           payment_reference: string | null
           payment_status: Database["public"]["Enums"]["payment_status"]
           status: Database["public"]["Enums"]["order_status"]
@@ -446,10 +611,12 @@ export type Database = {
           establishment_id: string
           event_id?: string | null
           first_pickup_at?: string | null
+          fiscal_status?: string
           id?: string
           menu_id?: string | null
           paid_at?: string | null
           payment_method?: string | null
+          payment_provider_ref?: string | null
           payment_reference?: string | null
           payment_status?: Database["public"]["Enums"]["payment_status"]
           status?: Database["public"]["Enums"]["order_status"]
@@ -466,10 +633,12 @@ export type Database = {
           establishment_id?: string
           event_id?: string | null
           first_pickup_at?: string | null
+          fiscal_status?: string
           id?: string
           menu_id?: string | null
           paid_at?: string | null
           payment_method?: string | null
+          payment_provider_ref?: string | null
           payment_reference?: string | null
           payment_status?: Database["public"]["Enums"]["payment_status"]
           status?: Database["public"]["Enums"]["order_status"]
@@ -822,6 +991,7 @@ export type Database = {
         Returns: Json
       }
       get_voucher: { Args: { p_code: string }; Returns: Json }
+      list_integrations: { Args: never; Returns: Json }
       owner_find_orders_by_document: {
         Args: { p_document: string; p_establishment_id: string }
         Returns: Json
@@ -838,6 +1008,15 @@ export type Database = {
       regenerate_menu_code: { Args: { p_menu_id: string }; Returns: Json }
       register_pickup: {
         Args: { p_items: Json; p_order_code: string; p_pin: string }
+        Returns: Json
+      }
+      save_integration: {
+        Args: {
+          p_credentials?: Json
+          p_enabled?: boolean
+          p_provider: string
+          p_settings?: Json
+        }
         Returns: Json
       }
       staff_find_orders_by_document: {
