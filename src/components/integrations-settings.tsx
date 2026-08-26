@@ -28,7 +28,7 @@ function generateApiKey() {
   return `tapgo_${Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("")}`;
 }
 
-function StatusBadge({ integration }: { integration?: IntegrationSummary }) {
+function StatusBadge({ integration }: { integration?: IntegrationSummary | undefined }) {
   if (!integration) return <Badge variant="secondary">Não configurado</Badge>;
   if (!integration.enabled) return <Badge variant="secondary">Desativado</Badge>;
   if (integration.last_status === "erro") return <Badge variant="destructive">Erro</Badge>;
