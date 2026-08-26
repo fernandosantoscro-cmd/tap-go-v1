@@ -152,21 +152,38 @@ function MenuPage() {
 
       <nav aria-label="Categorias" className="sticky top-0 z-20 border-b bg-background/95 backdrop-blur">
         <div className="mx-auto flex max-w-xl gap-2 overflow-x-auto px-5 py-3">
+          <button
+            type="button"
+            onClick={() => setActiveCategory("all")}
+            aria-pressed={activeCategory === "all"}
+            className={cn(
+              "shrink-0 rounded-full border px-4 py-2 text-sm font-medium transition",
+              activeCategory === "all" ? "bg-primary text-primary-foreground" : "hover:bg-secondary",
+            )}
+          >
+            Todos
+          </button>
           {menu.categories.map((category) => (
-            <a
+            <button
               key={category.id}
-              href={`#cat-${category.id}`}
-              className="shrink-0 rounded-full border px-4 py-2 text-sm font-medium hover:bg-secondary"
+              type="button"
+              onClick={() => setActiveCategory(category.id)}
+              aria-pressed={activeCategory === category.id}
+              className={cn(
+                "shrink-0 rounded-full border px-4 py-2 text-sm font-medium transition",
+                activeCategory === category.id ? "bg-primary text-primary-foreground" : "hover:bg-secondary",
+              )}
             >
               {category.name}
-            </a>
+            </button>
           ))}
         </div>
       </nav>
 
       <main className="mx-auto max-w-xl px-5">
-        {menu.categories.map((category) => (
+        {visibleCategories.map((category) => (
           <section key={category.id} id={`cat-${category.id}`} className="scroll-mt-20 py-8">
+
             <h2 className="text-lg font-semibold">{category.name}</h2>
             <ul className="mt-4 space-y-3">
               {(category.products ?? []).map((product) => (
