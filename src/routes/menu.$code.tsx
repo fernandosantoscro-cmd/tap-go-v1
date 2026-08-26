@@ -69,7 +69,10 @@ function MenuPage() {
   const [customerName, setCustomerName] = useState("");
   const [cpf, setCpf] = useState("");
 
+  useEffect(() => rememberMenuCode(menu.menu.code), [menu.menu.code]);
+
   const cpfOk = isValidCpf(cpf);
+
 
   const visibleCategories = useMemo(
     () =>
