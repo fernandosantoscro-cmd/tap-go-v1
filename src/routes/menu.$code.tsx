@@ -59,6 +59,19 @@ function MenuPage() {
   const [cart, setCart] = useState<Record<string, number>>({});
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [method, setMethod] = useState<"pix" | "card">("pix");
+  const [activeCategory, setActiveCategory] = useState<string>("all");
+  const [customerName, setCustomerName] = useState("");
+  const [cpf, setCpf] = useState("");
+
+  const cpfOk = isValidCpf(cpf);
+
+  const visibleCategories = useMemo(
+    () =>
+      activeCategory === "all"
+        ? menu.categories
+        : menu.categories.filter((category) => category.id === activeCategory),
+    [menu.categories, activeCategory],
+  );
 
   const products = useMemo(
     () => menu.categories.flatMap((category) => category.products ?? []),
@@ -85,14 +98,23 @@ function MenuPage() {
         data: {
           menuCode: menu.menu.code,
           paymentMethod: method,
+          customerName: customerName.trim() || null,
+          customerDocument: onlyDigits(cpf),
           items: lines.map((line) => ({ product_id: line.product.id, quantity: line.quantity })),
         },
       }),
     onSuccess: (order) => {
+      rememberOrder({
+        code: order.code,
+        establishment: menu.establishment.name,
+        total_cents: order.total_cents,
+        created_at: new Date().toISOString(),
+      });
       void navigate({ to: "/pagamento/$code", params: { code: order.code } });
     },
     onError: (error: Error) => toast.error(error.message || "Não foi possível criar o pedido"),
   });
+
 
   const change = (productId: string, delta: number) =>
     setCart((current) => {
