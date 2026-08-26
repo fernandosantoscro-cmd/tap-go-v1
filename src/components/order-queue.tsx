@@ -54,6 +54,21 @@ export function OrderQueue({ onList, onSetReadyQuantity, onAcceptPrep, onOpenOrd
     onError: (error: Error) => toast.error(error.message || "Não foi possível atualizar o item"),
   });
 
+  const acceptMutation = useMutation({
+    mutationFn: async (payload: { code: string; itemId: string; name: string }) => {
+      if (!onAcceptPrep) throw new Error("Ação indisponível");
+      const result = await onAcceptPrep(payload.code, payload.itemId);
+      if (result.error) throw new Error(result.error);
+      return payload;
+    },
+    onSuccess: (payload) => {
+      toast.success(`${payload.name}: preparo aceito`);
+      void queryClient.invalidateQueries({ queryKey });
+    },
+    onError: (error: Error) => toast.error(error.message || "Não foi possível aceitar o preparo"),
+  });
+
+
   const allOrders = queue.data ?? [];
   const orders = allOrders
     .map((order) => ({ order, items: pendingItems(order) }))
