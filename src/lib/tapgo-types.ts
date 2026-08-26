@@ -60,7 +60,10 @@ export interface VoucherItem {
   quantity: number;
   /** Quantidade já liberada pelo balcão (pronta para retirada). */
   ready_quantity: number;
+  /** Quantidade que o cliente pediu para entrar em preparo. */
+  requested_quantity?: number;
   delivered_quantity: number;
+
   /** Pronta e ainda não retirada = ready - delivered. */
   available_quantity: number;
   /** Ainda em preparo = quantity - ready. */

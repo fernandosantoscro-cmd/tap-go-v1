@@ -57,6 +57,24 @@ export const createOrder = createServerFn({ method: "POST" })
     return result as { code: string; total_cents: number };
   });
 
+/** O cliente pede para o estabelecimento começar a preparar N unidades de um item. */
+export const requestPrep = createServerFn({ method: "POST" })
+  .inputValidator((data: { code: string; itemId: string; quantity: number }) => ({
+    code: String(data.code).slice(0, 32),
+    itemId: String(data.itemId),
+    quantity: Math.max(1, Math.min(999, Number(data.quantity) || 1)),
+  }))
+  .handler(async ({ data }): Promise<VoucherPayload | null> => {
+    const { publicDb } = await import("./public-db.server");
+    const { data: result, error } = await publicDb().rpc("customer_request_prep", {
+      p_order_code: data.code,
+      p_item_id: data.itemId,
+      p_quantity: data.quantity,
+    });
+    if (error) throw new Error(error.message);
+    return (result as VoucherPayload | null) ?? null;
+  });
+
 
 export const confirmPayment = createServerFn({ method: "POST" })
   .inputValidator((data: { code: string }) => ({ code: String(data.code).slice(0, 32) }))

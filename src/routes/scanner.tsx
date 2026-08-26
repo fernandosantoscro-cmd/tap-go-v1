@@ -17,6 +17,7 @@ import {
   ownerFindOrdersByDocument,
   ownerListOpenOrders,
   ownerRegisterPickup,
+  ownerSetItemStatusByCode,
   ownerSetReadyQuantity,
 } from "@/lib/owner-pickup.functions";
 import {
@@ -25,6 +26,7 @@ import {
   staffGetOrder,
   staffListOpenOrders,
   staffLoginByCode,
+  staffSetItemStatus,
   staffSetReadyQuantity,
 } from "@/lib/tapgo.functions";
 import type { StaffSession } from "@/lib/tapgo-types";
@@ -72,10 +74,12 @@ function ScannerPage() {
   const lookupStaff = useServerFn(staffGetOrder);
   const pickupStaff = useServerFn(registerPickup);
   const readyStaff = useServerFn(staffSetReadyQuantity);
+  const acceptStaff = useServerFn(staffSetItemStatus);
   const findStaff = useServerFn(staffFindOrdersByDocument);
   const lookupOwner = useServerFn(ownerFetchVoucher);
   const pickupOwner = useServerFn(ownerRegisterPickup);
   const readyOwner = useServerFn(ownerSetReadyQuantity);
+  const acceptOwner = useServerFn(ownerSetItemStatusByCode);
   const findOwner = useServerFn(ownerFindOrdersByDocument);
   const listOwner = useServerFn(ownerListOpenOrders);
   const listStaff = useServerFn(staffListOpenOrders);
@@ -307,6 +311,7 @@ function ScannerPage() {
                 scope="owner"
                 onList={() => listOwner()}
                 onSetReadyQuantity={(code, itemId, quantity) => readyOwner({ data: { code, itemId, quantity } })}
+                onAcceptPrep={(code, itemId) => acceptOwner({ data: { code, itemId, status: "preparando" } })}
                 onOpenOrder={(code) => setOpenRequest({ code, nonce: Date.now() })}
               />
               <PickupConsole
@@ -324,6 +329,7 @@ function ScannerPage() {
                 scope={`pin:${pin}`}
                 onList={() => listStaff({ data: { pin } })}
                 onSetReadyQuantity={(code, itemId, quantity) => readyStaff({ data: { pin, code, itemId, quantity } })}
+                onAcceptPrep={(code, itemId) => acceptStaff({ data: { pin, code, itemId, status: "preparando" } })}
                 onOpenOrder={(code) => setOpenRequest({ code, nonce: Date.now() })}
               />
               <PickupConsole

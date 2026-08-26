@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { Bell, CheckCircle2, Clock, Download, Flame, ListOrdered, PartyPopper, Share2 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -13,7 +13,7 @@ import { formatBRL, ORDER_STATUS_LABEL } from "@/lib/format";
 import { rememberOrder } from "@/lib/my-orders";
 import { publishOrderAlert } from "@/lib/order-alert-bus";
 import { downloadReceipt, shareReceipt } from "@/lib/receipt";
-import { fetchVoucher } from "@/lib/tapgo.functions";
+import { fetchVoucher, requestPrep } from "@/lib/tapgo.functions";
 import type { VoucherItem, VoucherPayload } from "@/lib/tapgo-types";
 import { useOrderRealtime } from "@/lib/use-order-realtime";
 import { kitchenItemLabel, splitVoucherItems } from "@/lib/voucher-groups";
@@ -98,6 +98,19 @@ function VoucherPage() {
     typeof window === "undefined" ? `/voucher/${code}` : `${window.location.origin}/voucher/${code}`;
   const [busy, setBusy] = useState<"share" | "download" | null>(null);
 
+  const prepMutation = useMutation({
+    mutationFn: async (payload: { itemId: string; quantity: number; name: string }) => {
+      await requestPrep({ data: { code, itemId: payload.itemId, quantity: payload.quantity } });
+      return payload;
+    },
+    onSuccess: (payload) => {
+      toast.success(`Preparo solicitado: ${payload.quantity}× ${payload.name}`);
+      void refetch();
+    },
+    onError: (error: Error) => toast.error(error.message || "Não foi possível solicitar o preparo"),
+  });
+
+
   async function handleReceipt(action: "share" | "download") {
     setBusy(action);
     try {
@@ -128,33 +141,56 @@ function VoucherPage() {
   function renderItem(item: VoucherItem) {
     const done = item.remaining_quantity === 0;
     const ready = item.available_quantity > 0;
+    const requested = item.requested_quantity ?? 0;
+    const notRequested = Math.max(0, item.remaining_quantity - requested);
+    const canRequest = item.requires_prep && notRequested > 0;
     return (
-      <li key={item.id} className="flex items-center gap-3 rounded-2xl border p-4">
-        <span aria-hidden className="text-2xl">
-          {item.emoji ?? (item.requires_prep ? "🍽️" : "🍸")}
-        </span>
-        <div className="min-w-0 flex-1">
-          <p className="font-medium">
-            {item.quantity}× {item.name}
-          </p>
-          <p className="text-sm text-muted-foreground">
-            {done
-              ? `${item.quantity} retirado${item.quantity > 1 ? "s" : ""}`
-              : `${item.available_quantity} pronta(s) para retirada · ${item.preparing_quantity} em preparo`}
-          </p>
-        </div>
-        {done ? (
-          <CheckCircle2 className="size-5 text-success" aria-label="Item retirado" />
-        ) : item.requires_prep ? (
-          <span
-            className={`flex items-center gap-1 text-xs ${ready ? "text-success" : "text-muted-foreground"}`}
-          >
-            <Clock className="size-3.5" aria-hidden /> {kitchenItemLabel(item, voucher.order.paid_at)}
+      <li key={item.id} className="rounded-2xl border p-4">
+        <div className="flex items-center gap-3">
+          <span aria-hidden className="text-2xl">
+            {item.emoji ?? (item.requires_prep ? "🍽️" : "🍸")}
           </span>
-        ) : null}
+          <div className="min-w-0 flex-1">
+            <p className="font-medium">
+              {item.quantity}× {item.name}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {done
+                ? `${item.quantity} retirado${item.quantity > 1 ? "s" : ""}`
+                : `${item.available_quantity} pronta(s) para retirada · ${item.preparing_quantity} em preparo`}
+            </p>
+            {item.requires_prep && !done && (
+              <p className="text-xs text-muted-foreground">
+                {requested > 0
+                  ? `${requested} solicitada(s) para preparo`
+                  : "Peça o preparo quando quiser — o balcão confirma e começa."}
+              </p>
+            )}
+          </div>
+          {done ? (
+            <CheckCircle2 className="size-5 text-success" aria-label="Item retirado" />
+          ) : item.requires_prep ? (
+            <span className={`flex items-center gap-1 text-xs ${ready ? "text-success" : "text-muted-foreground"}`}>
+              <Clock className="size-3.5" aria-hidden /> {kitchenItemLabel(item, voucher.order.paid_at)}
+            </span>
+          ) : null}
+        </div>
+        {canRequest && (
+          <Button
+            size="sm"
+            variant="outline"
+            className="mt-3 rounded-full"
+            disabled={prepMutation.isPending}
+            onClick={() => prepMutation.mutate({ itemId: item.id, quantity: item.remaining_quantity, name: item.name })}
+          >
+            <Flame className="mr-2 size-4" aria-hidden />
+            {requested > 0 ? `Pedir preparo dos outros ${notRequested}` : `Pedir preparo (${notRequested})`}
+          </Button>
+        )}
       </li>
     );
   }
+
 
 
 

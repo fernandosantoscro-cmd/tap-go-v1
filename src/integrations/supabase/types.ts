@@ -331,6 +331,7 @@ export type Database = {
           product_name: string
           quantity: number
           ready_quantity: number
+          requested_quantity: number
           requires_prep: boolean
           status: Database["public"]["Enums"]["order_status"]
           unit_price_cents: number
@@ -347,6 +348,7 @@ export type Database = {
           product_name: string
           quantity: number
           ready_quantity?: number
+          requested_quantity?: number
           requires_prep?: boolean
           status?: Database["public"]["Enums"]["order_status"]
           unit_price_cents: number
@@ -363,6 +365,7 @@ export type Database = {
           product_name?: string
           quantity?: number
           ready_quantity?: number
+          requested_quantity?: number
           requires_prep?: boolean
           status?: Database["public"]["Enums"]["order_status"]
           unit_price_cents?: number
@@ -795,6 +798,10 @@ export type Database = {
           p_menu_code: string
           p_payment_method: string
         }
+        Returns: Json
+      }
+      customer_request_prep: {
+        Args: { p_item_id: string; p_order_code: string; p_quantity: number }
         Returns: Json
       }
       ensure_my_establishment: {

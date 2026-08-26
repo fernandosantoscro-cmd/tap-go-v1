@@ -16,18 +16,21 @@ export interface OrderQueueProps {
   onList: () => Promise<OpenOrder[]>;
   /** Define quantas unidades do item já estão prontas (valor absoluto). */
   onSetReadyQuantity: (code: string, itemId: string, quantity: number) => Promise<{ error: string | null }>;
+  /** Aceita o pedido de preparo do cliente (item entra em preparo). */
+  onAcceptPrep?: (code: string, itemId: string) => Promise<{ error: string | null }>;
   /** Abre o pedido no console de retirada, sem escanear. */
   onOpenOrder?: (code: string) => void;
   /** Identifica a fila no cache (dono ou PIN do estande). */
   scope: string;
 }
 
+
 function pendingItems(order: OpenOrder): VoucherItem[] {
   return order.items.filter((item) => item.remaining_quantity > 0);
 }
 
 /** Fila de preparo: o atendente libera as unidades aos poucos, sem precisar escanear. */
-export function OrderQueue({ onList, onSetReadyQuantity, onOpenOrder, scope }: OrderQueueProps) {
+export function OrderQueue({ onList, onSetReadyQuantity, onAcceptPrep, onOpenOrder, scope }: OrderQueueProps) {
   const queryClient = useQueryClient();
   const queryKey = ["order-queue", scope];
   const [filter, setFilter] = useState<Filter>("todos");
@@ -50,6 +53,21 @@ export function OrderQueue({ onList, onSetReadyQuantity, onOpenOrder, scope }: O
     },
     onError: (error: Error) => toast.error(error.message || "Não foi possível atualizar o item"),
   });
+
+  const acceptMutation = useMutation({
+    mutationFn: async (payload: { code: string; itemId: string; name: string }) => {
+      if (!onAcceptPrep) throw new Error("Ação indisponível");
+      const result = await onAcceptPrep(payload.code, payload.itemId);
+      if (result.error) throw new Error(result.error);
+      return payload;
+    },
+    onSuccess: (payload) => {
+      toast.success(`${payload.name}: preparo aceito`);
+      void queryClient.invalidateQueries({ queryKey });
+    },
+    onError: (error: Error) => toast.error(error.message || "Não foi possível aceitar o preparo"),
+  });
+
 
   const allOrders = queue.data ?? [];
   const orders = allOrders
@@ -178,6 +196,13 @@ export function OrderQueue({ onList, onSetReadyQuantity, onOpenOrder, scope }: O
                             {item.available_quantity} pronta(s) · {pending} em preparo · {item.delivered_quantity}{" "}
                             retirada(s)
                           </p>
+                          {item.requires_prep && (
+                            <p className="text-xs text-muted-foreground">
+                              {(item.requested_quantity ?? 0) > 0
+                                ? `Cliente pediu preparo de ${item.requested_quantity}`
+                                : "Cliente ainda não pediu o preparo"}
+                            </p>
+                          )}
                           <p className="flex items-center gap-1 text-xs text-muted-foreground">
                             {item.requires_prep ? (
                               <>
@@ -199,6 +224,18 @@ export function OrderQueue({ onList, onSetReadyQuantity, onOpenOrder, scope }: O
                           </span>
                         ) : (
                           <div className="flex flex-wrap gap-2">
+                            {onAcceptPrep && item.requires_prep && (item.requested_quantity ?? 0) > 0 && item.status === "recebido" && (
+                              <Button
+                                size="sm"
+                                variant="secondary"
+                                disabled={acceptMutation.isPending}
+                                onClick={() =>
+                                  acceptMutation.mutate({ code: order.code, itemId: item.id, name: item.name })
+                                }
+                              >
+                                Aceitar preparo
+                              </Button>
+                            )}
                             <Button size="sm" variant="outline" disabled={busy} onClick={() => release(order, item, 1)}>
                               +1
                             </Button>
@@ -217,6 +254,7 @@ export function OrderQueue({ onList, onSetReadyQuantity, onOpenOrder, scope }: O
                             </Button>
                           </div>
                         )}
+
                       </li>
                     );
                   })}

@@ -2,18 +2,20 @@ import { useMutation } from "@tanstack/react-query";
 import { createFileRoute, notFound, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { Clock, Minus, Plus, ShoppingBag, X } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
+import { ClientTabBar } from "@/components/client-tabbar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { isValidCpf, maskCpf, onlyDigits } from "@/lib/cpf";
 import { formatBRL } from "@/lib/format";
-import { rememberOrder } from "@/lib/my-orders";
+import { rememberMenuCode, rememberOrder } from "@/lib/my-orders";
 import { createOrder, fetchMenu } from "@/lib/tapgo.functions";
 import type { MenuPayload, MenuProduct } from "@/lib/tapgo-types";
 import { cn } from "@/lib/utils";
+
 
 
 export const Route = createFileRoute("/menu/$code")({
@@ -67,7 +69,10 @@ function MenuPage() {
   const [customerName, setCustomerName] = useState("");
   const [cpf, setCpf] = useState("");
 
+  useEffect(() => rememberMenuCode(menu.menu.code), [menu.menu.code]);
+
   const cpfOk = isValidCpf(cpf);
+
 
   const visibleCategories = useMemo(
     () =>
@@ -226,8 +231,9 @@ function MenuPage() {
                   <div className="min-w-0 flex-1">
                     <p className="font-medium">{product.name}</p>
                     {product.description && (
-                      <p className="truncate text-sm text-muted-foreground">{product.description}</p>
+                      <p className="whitespace-pre-line text-sm text-muted-foreground">{product.description}</p>
                     )}
+
                     <p className="mt-1 flex items-center gap-3 text-sm">
                       <span className="font-semibold">{formatBRL(product.price_cents)}</span>
                       {product.requires_prep && (
@@ -440,6 +446,8 @@ function MenuPage() {
           </div>
         </div>
       )}
+      {count === 0 && !checkoutOpen && <ClientTabBar menuCode={menu.menu.code} />}
     </div>
+
   );
 }
