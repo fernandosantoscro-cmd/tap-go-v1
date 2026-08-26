@@ -58,8 +58,15 @@ export interface VoucherItem {
   emoji: string | null;
   unit_price_cents: number;
   quantity: number;
+  /** Quantidade já liberada pelo balcão (pronta para retirada). */
+  ready_quantity: number;
   delivered_quantity: number;
+  /** Pronta e ainda não retirada = ready - delivered. */
   available_quantity: number;
+  /** Ainda em preparo = quantity - ready. */
+  preparing_quantity: number;
+  /** Falta retirar = quantity - delivered. */
+  remaining_quantity: number;
   prep_minutes: number;
   requires_prep: boolean;
   status: OrderStatus;
@@ -74,6 +81,7 @@ export interface VoucherPayload {
     total_cents: number;
     created_at: string;
     paid_at: string | null;
+    customer_name?: string | null;
     payment_reference: string | null;
   };
   establishment: { name: string } | null;
@@ -81,6 +89,7 @@ export interface VoucherPayload {
   menu: { name: string } | null;
   items: VoucherItem[];
 }
+
 
 export interface StaffSession {
   id: string;
