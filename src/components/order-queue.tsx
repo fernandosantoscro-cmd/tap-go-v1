@@ -196,6 +196,13 @@ export function OrderQueue({ onList, onSetReadyQuantity, onAcceptPrep, onOpenOrd
                             {item.available_quantity} pronta(s) · {pending} em preparo · {item.delivered_quantity}{" "}
                             retirada(s)
                           </p>
+                          {item.requires_prep && (
+                            <p className="text-xs text-muted-foreground">
+                              {(item.requested_quantity ?? 0) > 0
+                                ? `Cliente pediu preparo de ${item.requested_quantity}`
+                                : "Cliente ainda não pediu o preparo"}
+                            </p>
+                          )}
                           <p className="flex items-center gap-1 text-xs text-muted-foreground">
                             {item.requires_prep ? (
                               <>
@@ -217,6 +224,18 @@ export function OrderQueue({ onList, onSetReadyQuantity, onAcceptPrep, onOpenOrd
                           </span>
                         ) : (
                           <div className="flex flex-wrap gap-2">
+                            {onAcceptPrep && item.requires_prep && (item.requested_quantity ?? 0) > 0 && item.status === "recebido" && (
+                              <Button
+                                size="sm"
+                                variant="secondary"
+                                disabled={acceptMutation.isPending}
+                                onClick={() =>
+                                  acceptMutation.mutate({ code: order.code, itemId: item.id, name: item.name })
+                                }
+                              >
+                                Aceitar preparo
+                              </Button>
+                            )}
                             <Button size="sm" variant="outline" disabled={busy} onClick={() => release(order, item, 1)}>
                               +1
                             </Button>
@@ -235,6 +254,7 @@ export function OrderQueue({ onList, onSetReadyQuantity, onAcceptPrep, onOpenOrd
                             </Button>
                           </div>
                         )}
+
                       </li>
                     );
                   })}
