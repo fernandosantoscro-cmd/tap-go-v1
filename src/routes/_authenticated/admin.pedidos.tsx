@@ -1,6 +1,7 @@
-import { useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { CheckCircle2, ChefHat, Download, PackageCheck, RefreshCcw } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { CheckCircle2, ChefHat, Download, FileText, PackageCheck, RefreshCcw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -11,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useEstablishment, useOrders, useSetOrderStatus, type AdminOrder } from "@/lib/admin-db";
 import { buildRange, downloadCsv, toCsv, type DateRange } from "@/lib/date-range";
 import { formatBRL, formatDateTime, ORDER_STATUS_LABEL } from "@/lib/format";
+import { reissueFiscalDocument } from "@/lib/integrations.functions";
 
 export const Route = createFileRoute("/_authenticated/admin/pedidos")({
   component: OrdersPage,
