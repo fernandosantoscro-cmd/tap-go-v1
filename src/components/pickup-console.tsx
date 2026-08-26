@@ -114,18 +114,43 @@ export function PickupConsole({
   });
 
   const readyMutation = useMutation({
-    mutationFn: (payload: { code: string; itemId: string }) =>
-      onMarkReady!(payload.code, payload.itemId).then(async (res) => {
+    mutationFn: (payload: { code: string; itemId: string; quantity: number }) =>
+      onSetReadyQuantity!(payload.code, payload.itemId, payload.quantity).then(async (res) => {
         if (res.error) throw new Error(res.error);
         return onLookup(payload.code);
       }),
     onSuccess: (result) => {
       if (result.voucher) applyVoucher(result.voucher);
       onChanged?.();
-      toast.success("Item marcado como pronto");
+      toast.success("Quantidade liberada para retirada");
     },
-    onError: (error: Error) => toast.error(error.message || "Falha ao marcar como pronto"),
+    onError: (error: Error) => toast.error(error.message || "Falha ao liberar a quantidade"),
   });
+
+  const findMutation = useMutation({
+    mutationFn: (value: string) => onFindByDocument!(value),
+    onSuccess: (result) => {
+      if (result.error) {
+        fail(result.error);
+        return;
+      }
+      if (result.orders.length === 0) {
+        toast.error("Nenhum pedido ativo para este CPF.");
+        setMatches([]);
+        return;
+      }
+      if (result.orders.length === 1) {
+        applyVoucher(result.orders[0]!);
+        setMatches(null);
+        playScanCue("success");
+        toast.success(`Pedido ${result.orders[0]!.order.code} encontrado`);
+        return;
+      }
+      setMatches(result.orders);
+    },
+    onError: (error: Error) => fail(error.message || "Falha ao buscar pelo CPF"),
+  });
+
 
   const handleDetected = useCallback(
     (raw: string) => {
