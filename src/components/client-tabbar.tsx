@@ -5,7 +5,7 @@ import { ListOrdered, QrCode } from "lucide-react";
  * Barra inferior do PWA do cliente: dois destinos apenas, para o cliente nunca
  * se perder entre o voucher aberto e a lista de pedidos.
  */
-export function ClientTabBar({ voucherCode }: { voucherCode?: string }) {
+export function ClientTabBar({ voucherCode }: { voucherCode?: string | undefined }) {
   return (
     <nav
       aria-label="Navegação do cliente"
