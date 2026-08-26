@@ -62,6 +62,19 @@ function VoucherPage() {
 
   const { permission, enableAlerts, readyAlert, dismissReady } = useOrderRealtime(code, () => void refetch());
 
+  // O aviso vira pop-up global (nada de overlay em tela cheia nesta tela).
+  useEffect(() => {
+    if (!readyAlert) return;
+    publishOrderAlert({
+      id: readyAlert.id,
+      code,
+      itemName: readyAlert.itemName,
+      quantity: 1,
+      sameScreen: true,
+    });
+    dismissReady();
+  }, [readyAlert, code, dismissReady]);
+
   useEffect(() => {
     if (!initial?.order) return;
     rememberOrder({
