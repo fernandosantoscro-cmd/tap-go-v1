@@ -30,7 +30,7 @@ function pendingItems(order: OpenOrder): VoucherItem[] {
 }
 
 /** Fila de preparo: o atendente libera as unidades aos poucos, sem precisar escanear. */
-export function OrderQueue({ onList, onSetReadyQuantity, onOpenOrder, scope }: OrderQueueProps) {
+export function OrderQueue({ onList, onSetReadyQuantity, onAcceptPrep, onOpenOrder, scope }: OrderQueueProps) {
   const queryClient = useQueryClient();
   const queryKey = ["order-queue", scope];
   const [filter, setFilter] = useState<Filter>("todos");
