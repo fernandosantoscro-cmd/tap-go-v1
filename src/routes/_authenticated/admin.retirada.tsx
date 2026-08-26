@@ -10,10 +10,12 @@ import { Button } from "@/components/ui/button";
 import { useEstablishment } from "@/lib/admin-db";
 import {
   ownerFetchVoucher,
+  ownerFindOrdersByDocument,
   ownerListOpenOrders,
   ownerRegisterPickup,
-  ownerSetItemStatusByCode,
+  ownerSetReadyQuantity,
 } from "@/lib/owner-pickup.functions";
+
 
 
 export const Route = createFileRoute("/_authenticated/admin/retirada")({
