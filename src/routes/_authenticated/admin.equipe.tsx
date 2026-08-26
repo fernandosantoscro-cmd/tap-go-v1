@@ -93,6 +93,30 @@ function TeamPage() {
         </p>
       </header>
 
+      {establishment.data?.access_code && (
+        <div className="flex flex-wrap items-center gap-3 rounded-2xl border bg-secondary/40 p-5">
+          <div className="min-w-0">
+            <p className="text-xs uppercase tracking-widest text-muted-foreground">Código do estabelecimento</p>
+            <p className="font-display text-2xl font-semibold tracking-[0.25em]">{establishment.data.access_code}</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              O funcionário informa este código + o PIN dele em Entrar &gt; Sou funcionário.
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="ml-auto"
+            onClick={() => {
+              void navigator.clipboard.writeText(establishment.data!.access_code);
+              toast.success("Código copiado");
+            }}
+          >
+            Copiar código
+          </Button>
+        </div>
+      )}
+
+
       <form onSubmit={submit} className="grid gap-4 rounded-2xl border bg-background p-6 md:grid-cols-3">
         <div>
           <Label htmlFor="s-name">Nome</Label>

@@ -220,7 +220,7 @@ function LandingHeader() {
           <ThemeToggle />
           
           <Button asChild size="sm" variant="outline" className="hidden sm:inline-flex">
-            <Link to="/auth">Entrar</Link>
+            <Link to="/acessar">Entrar</Link>
           </Button>
 
           <Button asChild size="sm" className="hidden sm:inline-flex">
@@ -256,7 +256,7 @@ function LandingHeader() {
             
             <div className="mb-3 flex gap-2">
               <Button asChild size="sm" variant="outline" className="flex-1">
-                <Link to="/auth">Entrar</Link>
+                <Link to="/acessar">Entrar</Link>
               </Button>
               <Button asChild size="sm" className="flex-1">
                 <Link to="/auth" search={{ mode: "signup" }}>
@@ -338,7 +338,7 @@ function Landing() {
                   </Link>
                 </Button>
                 <Button asChild size="lg" variant="outline" className="tap-target">
-                  <Link to="/auth">Entrar</Link>
+                  <Link to="/acessar">Entrar</Link>
                 </Button>
               </div>
               <p className="mt-4 text-xs text-muted-foreground">
@@ -595,7 +595,7 @@ function Landing() {
                 </Link>
               </Button>
               <Button asChild size="lg" variant="outline" className="tap-target bg-transparent text-primary-foreground border-primary-foreground/40 hover:bg-primary-foreground/10 hover:text-primary-foreground">
-                <Link to="/auth">Entrar</Link>
+                <Link to="/acessar">Entrar</Link>
               </Button>
             </div>
           </div>

@@ -16,6 +16,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as MeusPedidosRouteImport } from './routes/meus-pedidos'
 import { Route as ScannerRouteImport } from './routes/scanner'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthNovaSenhaRouteImport } from './routes/auth.nova-senha'
 import { Route as MenuCodeRouteImport } from './routes/menu.$code'
 import { Route as PagamentoCodeRouteImport } from './routes/pagamento.$code'
 import { Route as VoucherCodeRouteImport } from './routes/voucher.$code'
@@ -63,6 +64,11 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthNovaSenhaRoute = AuthNovaSenhaRouteImport.update({
+  id: '/nova-senha',
+  path: '/nova-senha',
+  getParentRoute: () => AuthRoute,
 } as any)
 const MenuCodeRoute = MenuCodeRouteImport.update({
   id: '/menu/$code',
@@ -142,10 +148,11 @@ const AuthenticatedAdminCardapiosMenuIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/acessar': typeof AcessarRoute
-  '/auth': typeof AuthRoute
+  '/auth': typeof AuthRouteWithChildren
   '/meus-pedidos': typeof MeusPedidosRoute
   '/scanner': typeof ScannerRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/auth/nova-senha': typeof AuthNovaSenhaRoute
   '/menu/$code': typeof MenuCodeRoute
   '/pagamento/$code': typeof PagamentoCodeRoute
   '/voucher/$code': typeof VoucherCodeRoute
@@ -163,9 +170,10 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/acessar': typeof AcessarRoute
-  '/auth': typeof AuthRoute
+  '/auth': typeof AuthRouteWithChildren
   '/meus-pedidos': typeof MeusPedidosRoute
   '/scanner': typeof ScannerRoute
+  '/auth/nova-senha': typeof AuthNovaSenhaRoute
   '/menu/$code': typeof MenuCodeRoute
   '/pagamento/$code': typeof PagamentoCodeRoute
   '/voucher/$code': typeof VoucherCodeRoute
@@ -185,10 +193,11 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/acessar': typeof AcessarRoute
-  '/auth': typeof AuthRoute
+  '/auth': typeof AuthRouteWithChildren
   '/meus-pedidos': typeof MeusPedidosRoute
   '/scanner': typeof ScannerRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/auth/nova-senha': typeof AuthNovaSenhaRoute
   '/menu/$code': typeof MenuCodeRoute
   '/pagamento/$code': typeof PagamentoCodeRoute
   '/voucher/$code': typeof VoucherCodeRoute
@@ -212,6 +221,7 @@ export interface FileRouteTypes {
     | '/meus-pedidos'
     | '/scanner'
     | '/admin'
+    | '/auth/nova-senha'
     | '/menu/$code'
     | '/pagamento/$code'
     | '/voucher/$code'
@@ -232,6 +242,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/meus-pedidos'
     | '/scanner'
+    | '/auth/nova-senha'
     | '/menu/$code'
     | '/pagamento/$code'
     | '/voucher/$code'
@@ -254,6 +265,7 @@ export interface FileRouteTypes {
     | '/meus-pedidos'
     | '/scanner'
     | '/_authenticated/admin'
+    | '/auth/nova-senha'
     | '/menu/$code'
     | '/pagamento/$code'
     | '/voucher/$code'
@@ -273,7 +285,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AcessarRoute: typeof AcessarRoute
-  AuthRoute: typeof AuthRoute
+  AuthRoute: typeof AuthRouteWithChildren
   MeusPedidosRoute: typeof MeusPedidosRoute
   ScannerRoute: typeof ScannerRoute
   MenuCodeRoute: typeof MenuCodeRoute
@@ -331,6 +343,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin'
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/auth/nova-senha': {
+      id: '/auth/nova-senha'
+      path: '/nova-senha'
+      fullPath: '/auth/nova-senha'
+      preLoaderRoute: typeof AuthNovaSenhaRouteImport
+      parentRoute: typeof AuthRoute
     }
     '/menu/$code': {
       id: '/menu/$code'
@@ -467,11 +486,21 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
+interface AuthRouteChildren {
+  AuthNovaSenhaRoute: typeof AuthNovaSenhaRoute
+}
+
+const AuthRouteChildren: AuthRouteChildren = {
+  AuthNovaSenhaRoute: AuthNovaSenhaRoute,
+}
+
+const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AcessarRoute: AcessarRoute,
-  AuthRoute: AuthRoute,
+  AuthRoute: AuthRouteWithChildren,
   MeusPedidosRoute: MeusPedidosRoute,
   ScannerRoute: ScannerRoute,
   MenuCodeRoute: MenuCodeRoute,

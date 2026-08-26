@@ -11,6 +11,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { GlobalOrderAlerts } from "@/components/global-order-alerts";
 import { Toaster } from "@/components/ui/sonner";
 
 
@@ -148,6 +149,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
+      <GlobalOrderAlerts />
       <Toaster position="top-center" />
       
     </QueryClientProvider>

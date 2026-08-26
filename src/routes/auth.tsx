@@ -3,6 +3,7 @@ import { ArrowLeft, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
+import { GoogleIcon } from "@/components/google-icon";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -43,6 +44,10 @@ function AuthPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [checking, setChecking] = useState(true);
+  const [resetting, setResetting] = useState(false);
+
+  const strength =
+    password.length === 0 ? null : password.length < 6 ? "curta" : password.length < 10 ? "ok" : "forte";
 
   useEffect(() => {
     let active = true;
@@ -98,6 +103,23 @@ function AuthPage() {
   }
 
 
+  async function handleReset() {
+    if (!email.trim()) {
+      toast.error("Escreva seu e-mail para receber o link de recuperação");
+      return;
+    }
+    setResetting(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: window.location.origin + "/auth/nova-senha",
+    });
+    setResetting(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Enviamos um link de recuperação para o seu e-mail.");
+  }
+
   async function handleGoogle() {
     if (mode === "signup") {
       if (name.trim().length < 2) {
@@ -142,6 +164,7 @@ function AuthPage() {
           </p>
 
           <Button variant="outline" className="mt-6 h-12 w-full" onClick={() => void handleGoogle()}>
+            <GoogleIcon className="mr-2 size-5" />
             Continuar com Google
           </Button>
 
@@ -227,11 +250,30 @@ function AuthPage() {
                 autoComplete={mode === "login" ? "current-password" : "new-password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                minLength={1}
+                minLength={6}
                 className="mt-1"
                 required
               />
+              {strength && (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {strength === "curta"
+                    ? "Use pelo menos 6 caracteres."
+                    : strength === "ok"
+                      ? "Senha aceita — pode deixar mais longa se quiser."
+                      : "Boa senha."}
+                </p>
+              )}
             </div>
+            {mode === "login" && (
+              <button
+                type="button"
+                className="justify-self-start text-xs text-muted-foreground underline-offset-4 hover:underline"
+                disabled={resetting}
+                onClick={() => void handleReset()}
+              >
+                {resetting ? "Enviando link…" : "Esqueci minha senha"}
+              </button>
+            )}
             <Button type="submit" className="h-12" disabled={loading}>
               {loading ? "Aguarde…" : mode === "login" ? "Entrar" : "Criar conta"}
             </Button>
