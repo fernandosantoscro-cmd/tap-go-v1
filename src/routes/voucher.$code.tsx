@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { formatBRL, ORDER_STATUS_LABEL } from "@/lib/format";
 import { rememberOrder } from "@/lib/my-orders";
+import { publishOrderAlert } from "@/lib/order-alert-bus";
 import { downloadReceipt, shareReceipt } from "@/lib/receipt";
 import { fetchVoucher } from "@/lib/tapgo.functions";
 import type { VoucherItem, VoucherPayload } from "@/lib/tapgo-types";
