@@ -9,9 +9,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { maskCpf, onlyDigits } from "@/lib/cpf";
 import { formatBRL, ORDER_STATUS_LABEL } from "@/lib/format";
 import type { VoucherItem, VoucherPayload } from "@/lib/tapgo-types";
-import { isReadyForPickup, kitchenItemLabel } from "@/lib/voucher-groups";
+import { kitchenItemLabel } from "@/lib/voucher-groups";
 
 export interface PickupResult {
   voucher: VoucherPayload | null;
