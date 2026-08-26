@@ -290,6 +290,42 @@ function MenuPage() {
 
               <Separator className="my-5" />
 
+              <div className="grid gap-3">
+                <div>
+                  <label htmlFor="customer-name" className="text-sm font-medium">
+                    Nome <span className="text-muted-foreground">(opcional)</span>
+                  </label>
+                  <Input
+                    id="customer-name"
+                    value={customerName}
+                    onChange={(event) => setCustomerName(event.target.value)}
+                    placeholder="Como quer ser chamado no balcão"
+                    className="mt-1 h-12"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="customer-cpf" className="text-sm font-medium">
+                    CPF <span className="text-primary">*</span>
+                  </label>
+                  <Input
+                    id="customer-cpf"
+                    value={cpf}
+                    inputMode="numeric"
+                    autoComplete="off"
+                    onChange={(event) => setCpf(maskCpf(event.target.value))}
+                    placeholder="000.000.000-00"
+                    aria-invalid={cpf.length > 0 && !cpfOk}
+                    className="mt-1 h-12"
+                  />
+                  {cpf.length > 0 && !cpfOk && (
+                    <p className="mt-1 text-xs text-destructive">CPF inválido — confira os números.</p>
+                  )}
+                </div>
+              </div>
+
+              <Separator className="my-5" />
+
+
               <fieldset>
                 <legend className="text-sm font-medium">Forma de pagamento</legend>
                 <div className="mt-3 grid gap-2">
