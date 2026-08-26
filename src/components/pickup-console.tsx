@@ -170,21 +170,23 @@ export function PickupConsole({
   }, [openRequest]);
 
   const totalSelected = Object.values(quantities).reduce((sum, quantity) => sum + quantity, 0);
-  const allDelivered = voucher?.items.every((item) => item.available_quantity === 0) ?? false;
+  const allDelivered = voucher?.items.every((item) => item.remaining_quantity === 0) ?? false;
   const paidAt = voucher?.order.paid_at ?? null;
 
   function renderRow(item: VoucherItem) {
-    const done = item.available_quantity === 0;
-    const ready = isReadyForPickup(item);
+    const done = item.remaining_quantity === 0;
     return (
       <li key={item.id} className="flex flex-wrap items-center gap-3 rounded-xl border p-3">
         <span aria-hidden className="text-2xl">
           {item.emoji ?? (item.requires_prep ? "🍽️" : "🍸")}
         </span>
         <div className="min-w-0 flex-1">
-          <p className="font-medium">{item.name}</p>
+          <p className="font-medium">
+            {item.quantity}× {item.name}
+          </p>
           <p className="text-xs text-muted-foreground">
-            {item.available_quantity} de {item.quantity} disponível
+            {item.available_quantity} pronta(s) · {item.preparing_quantity} em preparo · {item.delivered_quantity}{" "}
+            retirada(s)
             {item.requires_prep ? ` · ${kitchenItemLabel(item, paidAt)}` : ""}
           </p>
         </div>
@@ -219,26 +221,45 @@ export function PickupConsole({
             </Button>
           </div>
         )}
-        {!done && !ready && (
+        {!done && item.preparing_quantity > 0 && (
           <>
             <Badge variant="outline" className="ml-1 shrink-0">
-              Em preparo
+              {item.preparing_quantity} em preparo
             </Badge>
-            {onMarkReady && voucher && (
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={readyMutation.isPending}
-                onClick={() => readyMutation.mutate({ code: voucher.order.code, itemId: item.id })}
-              >
-                Marcar pronto
-              </Button>
+            {onSetReadyQuantity && voucher && (
+              <div className="flex gap-1">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={readyMutation.isPending}
+                  onClick={() =>
+                    readyMutation.mutate({
+                      code: voucher.order.code,
+                      itemId: item.id,
+                      quantity: item.ready_quantity + 1,
+                    })
+                  }
+                >
+                  Liberar +1
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={readyMutation.isPending}
+                  onClick={() =>
+                    readyMutation.mutate({ code: voucher.order.code, itemId: item.id, quantity: item.quantity })
+                  }
+                >
+                  Liberar tudo
+                </Button>
+              </div>
             )}
           </>
         )}
       </li>
     );
   }
+
 
   const counterItems = (voucher?.items ?? []).filter((item) => !item.requires_prep);
   const kitchenItems = (voucher?.items ?? []).filter((item) => item.requires_prep);
