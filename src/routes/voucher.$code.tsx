@@ -4,6 +4,7 @@ import { Bell, CheckCircle2, Clock, Download, Flame, ListOrdered, PartyPopper, S
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
+import { ClientTabBar } from "@/components/client-tabbar";
 import { QrCode } from "@/components/qr-code";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
