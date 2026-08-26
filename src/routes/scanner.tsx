@@ -180,18 +180,31 @@ function ScannerPage() {
           className="w-full max-w-sm rounded-3xl border bg-background p-8"
           onSubmit={(event) => {
             event.preventDefault();
-            loginMutation.mutate(pinInput);
+            loginMutation.mutate({ code: codeInput.trim(), pin: pinInput });
           }}
         >
           <ScanLine className="size-7 text-primary" aria-hidden />
-          <h1 className="mt-5 text-2xl font-semibold">Balcão do atendente</h1>
+          <h1 className="mt-5 text-2xl font-semibold">Sou funcionário</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Esta tela é só para quem trabalha no balcão. Você não precisa de conta nem senha: use o PIN do seu
-            estande, entregue pelo dono do estabelecimento.
+            Você não precisa de conta nem senha. Informe o código do estabelecimento e o seu PIN individual — os dois
+            ficam no Painel &gt; Equipe do dono.
           </p>
 
           <div className="mt-6">
-            <Label htmlFor="pin">PIN</Label>
+            <Label htmlFor="establishment-code">Código do estabelecimento</Label>
+            <Input
+              id="establishment-code"
+              value={codeInput}
+              onChange={(event) => setCodeInput(event.target.value.toUpperCase().slice(0, 12))}
+              autoComplete="off"
+              placeholder="EX: BAR7K2"
+              className="mt-1 text-center text-lg tracking-[0.3em] uppercase"
+              required
+            />
+          </div>
+
+          <div className="mt-4">
+            <Label htmlFor="pin">Seu PIN</Label>
             <Input
               id="pin"
               value={pinInput}
@@ -204,14 +217,12 @@ function ScannerPage() {
             />
           </div>
           <Button type="submit" className="mt-5 h-12 w-full" disabled={loginMutation.isPending}>
-            {loginMutation.isPending ? "Validando…" : "Entrar"}
+            {loginMutation.isPending ? "Validando…" : "Entrar na operação"}
           </Button>
-          <p className="mt-4 text-center text-xs text-muted-foreground">
-            O PIN é emitido pela conta do estabelecimento em Painel &gt; Equipe.
-          </p>
           <Button asChild variant="link" className="mt-2 w-full text-xs">
-            <Link to="/auth">Sou o dono — entrar com login</Link>
+            <Link to="/acessar">Voltar — sou dono do estabelecimento</Link>
           </Button>
+
         </form>
       </div>
     );
