@@ -226,8 +226,9 @@ function MenuPage() {
                   <div className="min-w-0 flex-1">
                     <p className="font-medium">{product.name}</p>
                     {product.description && (
-                      <p className="truncate text-sm text-muted-foreground">{product.description}</p>
+                      <p className="whitespace-pre-line text-sm text-muted-foreground">{product.description}</p>
                     )}
+
                     <p className="mt-1 flex items-center gap-3 text-sm">
                       <span className="font-semibold">{formatBRL(product.price_cents)}</span>
                       {product.requires_prep && (
