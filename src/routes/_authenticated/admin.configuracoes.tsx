@@ -1,9 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Clock, MonitorDown, Save, Store } from "lucide-react";
+import { Clock, FileText, MonitorDown, Save, Store } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { InstallButton } from "@/components/install-button";
+import { IntegrationsSettings } from "@/components/integrations-settings";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
