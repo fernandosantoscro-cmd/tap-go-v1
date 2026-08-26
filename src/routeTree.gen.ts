@@ -25,6 +25,7 @@ import { Route as AuthenticatedAdminConfiguracoesRouteImport } from './routes/_a
 import { Route as AuthenticatedAdminEquipeRouteImport } from './routes/_authenticated/admin.equipe'
 import { Route as AuthenticatedAdminEventosRouteImport } from './routes/_authenticated/admin.eventos'
 import { Route as AuthenticatedAdminPedidosRouteImport } from './routes/_authenticated/admin.pedidos'
+import { Route as AuthenticatedAdminPrimeirosPassosRouteImport } from './routes/_authenticated/admin.primeiros-passos'
 import { Route as AuthenticatedAdminQrcodesRouteImport } from './routes/_authenticated/admin.qrcodes'
 import { Route as AuthenticatedAdminRelatoriosRouteImport } from './routes/_authenticated/admin.relatorios'
 import { Route as AuthenticatedAdminRetiradaRouteImport } from './routes/_authenticated/admin.retirada'
@@ -116,6 +117,12 @@ const AuthenticatedAdminPedidosRoute =
     path: '/pedidos',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminPrimeirosPassosRoute =
+  AuthenticatedAdminPrimeirosPassosRouteImport.update({
+    id: '/primeiros-passos',
+    path: '/primeiros-passos',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminQrcodesRoute =
   AuthenticatedAdminQrcodesRouteImport.update({
     id: '/qrcodes',
@@ -174,6 +181,7 @@ export interface FileRoutesByFullPath {
   '/admin/equipe': typeof AuthenticatedAdminEquipeRoute
   '/admin/eventos': typeof AuthenticatedAdminEventosRoute
   '/admin/pedidos': typeof AuthenticatedAdminPedidosRoute
+  '/admin/primeiros-passos': typeof AuthenticatedAdminPrimeirosPassosRoute
   '/admin/qrcodes': typeof AuthenticatedAdminQrcodesRoute
   '/admin/relatorios': typeof AuthenticatedAdminRelatoriosRoute
   '/admin/retirada': typeof AuthenticatedAdminRetiradaRoute
@@ -197,6 +205,7 @@ export interface FileRoutesByTo {
   '/admin/equipe': typeof AuthenticatedAdminEquipeRoute
   '/admin/eventos': typeof AuthenticatedAdminEventosRoute
   '/admin/pedidos': typeof AuthenticatedAdminPedidosRoute
+  '/admin/primeiros-passos': typeof AuthenticatedAdminPrimeirosPassosRoute
   '/admin/qrcodes': typeof AuthenticatedAdminQrcodesRoute
   '/admin/relatorios': typeof AuthenticatedAdminRelatoriosRoute
   '/admin/retirada': typeof AuthenticatedAdminRetiradaRoute
@@ -223,6 +232,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/equipe': typeof AuthenticatedAdminEquipeRoute
   '/_authenticated/admin/eventos': typeof AuthenticatedAdminEventosRoute
   '/_authenticated/admin/pedidos': typeof AuthenticatedAdminPedidosRoute
+  '/_authenticated/admin/primeiros-passos': typeof AuthenticatedAdminPrimeirosPassosRoute
   '/_authenticated/admin/qrcodes': typeof AuthenticatedAdminQrcodesRoute
   '/_authenticated/admin/relatorios': typeof AuthenticatedAdminRelatoriosRoute
   '/_authenticated/admin/retirada': typeof AuthenticatedAdminRetiradaRoute
@@ -249,6 +259,7 @@ export interface FileRouteTypes {
     | '/admin/equipe'
     | '/admin/eventos'
     | '/admin/pedidos'
+    | '/admin/primeiros-passos'
     | '/admin/qrcodes'
     | '/admin/relatorios'
     | '/admin/retirada'
@@ -272,6 +283,7 @@ export interface FileRouteTypes {
     | '/admin/equipe'
     | '/admin/eventos'
     | '/admin/pedidos'
+    | '/admin/primeiros-passos'
     | '/admin/qrcodes'
     | '/admin/relatorios'
     | '/admin/retirada'
@@ -297,6 +309,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/equipe'
     | '/_authenticated/admin/eventos'
     | '/_authenticated/admin/pedidos'
+    | '/_authenticated/admin/primeiros-passos'
     | '/_authenticated/admin/qrcodes'
     | '/_authenticated/admin/relatorios'
     | '/_authenticated/admin/retirada'
@@ -435,6 +448,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminPedidosRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/primeiros-passos': {
+      id: '/_authenticated/admin/primeiros-passos'
+      path: '/primeiros-passos'
+      fullPath: '/admin/primeiros-passos'
+      preLoaderRoute: typeof AuthenticatedAdminPrimeirosPassosRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/qrcodes': {
       id: '/_authenticated/admin/qrcodes'
       path: '/qrcodes'
@@ -492,6 +512,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminEquipeRoute: typeof AuthenticatedAdminEquipeRoute
   AuthenticatedAdminEventosRoute: typeof AuthenticatedAdminEventosRoute
   AuthenticatedAdminPedidosRoute: typeof AuthenticatedAdminPedidosRoute
+  AuthenticatedAdminPrimeirosPassosRoute: typeof AuthenticatedAdminPrimeirosPassosRoute
   AuthenticatedAdminQrcodesRoute: typeof AuthenticatedAdminQrcodesRoute
   AuthenticatedAdminRelatoriosRoute: typeof AuthenticatedAdminRelatoriosRoute
   AuthenticatedAdminRetiradaRoute: typeof AuthenticatedAdminRetiradaRoute
@@ -505,6 +526,8 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminEquipeRoute: AuthenticatedAdminEquipeRoute,
   AuthenticatedAdminEventosRoute: AuthenticatedAdminEventosRoute,
   AuthenticatedAdminPedidosRoute: AuthenticatedAdminPedidosRoute,
+  AuthenticatedAdminPrimeirosPassosRoute:
+    AuthenticatedAdminPrimeirosPassosRoute,
   AuthenticatedAdminQrcodesRoute: AuthenticatedAdminQrcodesRoute,
   AuthenticatedAdminRelatoriosRoute: AuthenticatedAdminRelatoriosRoute,
   AuthenticatedAdminRetiradaRoute: AuthenticatedAdminRetiradaRoute,
