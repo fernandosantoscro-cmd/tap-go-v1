@@ -446,6 +446,8 @@ function MenuPage() {
           </div>
         </div>
       )}
+      <ClientTabBar menuCode={menu.menu.code} />
     </div>
+
   );
 }
