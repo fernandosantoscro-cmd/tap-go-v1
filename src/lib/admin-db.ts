@@ -22,6 +22,23 @@ export type PickupRow = Row<"pickups">;
 export type LogRow = Row<"logs">;
 
 export const SIGNUP_KEY = "tapgo.signup";
+export const SETUP_PENDING_KEY = "tapgo.setup.pending";
+
+/** Marca o assistente de primeiros passos como concluído para este estabelecimento. */
+export function markSetupDone(establishmentId?: string) {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem(SETUP_PENDING_KEY);
+  if (establishmentId) localStorage.setItem(`tapgo.setup.done.${establishmentId}`, "1");
+}
+
+/** Precisa passar pelo assistente? (conta nova, sem nome definido ou sem cardápio) */
+export function isSetupPending(establishment: Establishment | undefined, menuCount: number | undefined) {
+  if (typeof window === "undefined" || !establishment) return false;
+  if (localStorage.getItem(`tapgo.setup.done.${establishment.id}`)) return false;
+  if (localStorage.getItem(SETUP_PENDING_KEY)) return true;
+  if (menuCount === undefined) return false;
+  return menuCount === 0 || establishment.name === "Meu estabelecimento";
+}
 
 export interface PendingSignup {
   name?: string;
