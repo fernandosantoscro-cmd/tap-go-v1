@@ -4,6 +4,19 @@
  */
 
 const KEY = "tapgo.my-orders";
+const MENU_KEY = "tapgo.last-menu";
+
+/** Guarda o último cardápio aberto neste aparelho (aba "Cardápio"). */
+export function rememberMenuCode(code: string): void {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(MENU_KEY, code);
+}
+
+export function getLastMenuCode(): string | null {
+  if (typeof window === "undefined") return null;
+  return window.localStorage.getItem(MENU_KEY);
+}
+
 
 export interface StoredOrder {
   code: string;
