@@ -30,6 +30,8 @@ import { Route as AuthenticatedAdminRelatoriosRouteImport } from './routes/_auth
 import { Route as AuthenticatedAdminRetiradaRouteImport } from './routes/_authenticated/admin.retirada'
 import { Route as AuthenticatedAdminCardapiosIndexRouteImport } from './routes/_authenticated/admin.cardapios.index'
 import { Route as AuthenticatedAdminCardapiosMenuIdRouteImport } from './routes/_authenticated/admin.cardapios.$menuId'
+import { Route as ApiPublicIntegrationsOrdersRouteImport } from './routes/api/public/integrations/orders'
+import { Route as ApiPublicWebhooksMercadopagoRouteImport } from './routes/api/public/webhooks/mercadopago'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -144,6 +146,18 @@ const AuthenticatedAdminCardapiosMenuIdRoute =
     path: '/cardapios/$menuId',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const ApiPublicIntegrationsOrdersRoute =
+  ApiPublicIntegrationsOrdersRouteImport.update({
+    id: '/api/public/integrations/orders',
+    path: '/api/public/integrations/orders',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicWebhooksMercadopagoRoute =
+  ApiPublicWebhooksMercadopagoRouteImport.update({
+    id: '/api/public/webhooks/mercadopago',
+    path: '/api/public/webhooks/mercadopago',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -165,6 +179,8 @@ export interface FileRoutesByFullPath {
   '/admin/retirada': typeof AuthenticatedAdminRetiradaRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/admin/cardapios/$menuId': typeof AuthenticatedAdminCardapiosMenuIdRoute
+  '/api/public/integrations/orders': typeof ApiPublicIntegrationsOrdersRoute
+  '/api/public/webhooks/mercadopago': typeof ApiPublicWebhooksMercadopagoRoute
   '/admin/cardapios/': typeof AuthenticatedAdminCardapiosIndexRoute
 }
 export interface FileRoutesByTo {
@@ -186,6 +202,8 @@ export interface FileRoutesByTo {
   '/admin/retirada': typeof AuthenticatedAdminRetiradaRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/admin/cardapios/$menuId': typeof AuthenticatedAdminCardapiosMenuIdRoute
+  '/api/public/integrations/orders': typeof ApiPublicIntegrationsOrdersRoute
+  '/api/public/webhooks/mercadopago': typeof ApiPublicWebhooksMercadopagoRoute
   '/admin/cardapios': typeof AuthenticatedAdminCardapiosIndexRoute
 }
 export interface FileRoutesById {
@@ -210,6 +228,8 @@ export interface FileRoutesById {
   '/_authenticated/admin/retirada': typeof AuthenticatedAdminRetiradaRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/admin/cardapios/$menuId': typeof AuthenticatedAdminCardapiosMenuIdRoute
+  '/api/public/integrations/orders': typeof ApiPublicIntegrationsOrdersRoute
+  '/api/public/webhooks/mercadopago': typeof ApiPublicWebhooksMercadopagoRoute
   '/_authenticated/admin/cardapios/': typeof AuthenticatedAdminCardapiosIndexRoute
 }
 export interface FileRouteTypes {
@@ -234,6 +254,8 @@ export interface FileRouteTypes {
     | '/admin/retirada'
     | '/admin/'
     | '/admin/cardapios/$menuId'
+    | '/api/public/integrations/orders'
+    | '/api/public/webhooks/mercadopago'
     | '/admin/cardapios/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -255,6 +277,8 @@ export interface FileRouteTypes {
     | '/admin/retirada'
     | '/admin'
     | '/admin/cardapios/$menuId'
+    | '/api/public/integrations/orders'
+    | '/api/public/webhooks/mercadopago'
     | '/admin/cardapios'
   id:
     | '__root__'
@@ -278,6 +302,8 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/retirada'
     | '/_authenticated/admin/'
     | '/_authenticated/admin/cardapios/$menuId'
+    | '/api/public/integrations/orders'
+    | '/api/public/webhooks/mercadopago'
     | '/_authenticated/admin/cardapios/'
   fileRoutesById: FileRoutesById
 }
@@ -291,6 +317,8 @@ export interface RootRouteChildren {
   MenuCodeRoute: typeof MenuCodeRoute
   PagamentoCodeRoute: typeof PagamentoCodeRoute
   VoucherCodeRoute: typeof VoucherCodeRoute
+  ApiPublicIntegrationsOrdersRoute: typeof ApiPublicIntegrationsOrdersRoute
+  ApiPublicWebhooksMercadopagoRoute: typeof ApiPublicWebhooksMercadopagoRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -442,6 +470,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminCardapiosMenuIdRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/api/public/integrations/orders': {
+      id: '/api/public/integrations/orders'
+      path: '/api/public/integrations/orders'
+      fullPath: '/api/public/integrations/orders'
+      preLoaderRoute: typeof ApiPublicIntegrationsOrdersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/webhooks/mercadopago': {
+      id: '/api/public/webhooks/mercadopago'
+      path: '/api/public/webhooks/mercadopago'
+      fullPath: '/api/public/webhooks/mercadopago'
+      preLoaderRoute: typeof ApiPublicWebhooksMercadopagoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -506,6 +548,8 @@ const rootRouteChildren: RootRouteChildren = {
   MenuCodeRoute: MenuCodeRoute,
   PagamentoCodeRoute: PagamentoCodeRoute,
   VoucherCodeRoute: VoucherCodeRoute,
+  ApiPublicIntegrationsOrdersRoute: ApiPublicIntegrationsOrdersRoute,
+  ApiPublicWebhooksMercadopagoRoute: ApiPublicWebhooksMercadopagoRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

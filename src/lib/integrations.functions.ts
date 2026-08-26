@@ -5,7 +5,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 export interface IntegrationSummary {
   provider: string;
   enabled: boolean;
-  settings: Record<string, unknown>;
+  settings: Record<string, string | number | boolean | null>;
   last_status: string | null;
   last_error: string | null;
   has_credentials: boolean;
@@ -37,8 +37,8 @@ export const saveIntegration = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { data: result, error } = await context.supabase.rpc("save_integration", {
       p_provider: data.provider,
-      p_credentials: data.credentials,
-      p_settings: data.settings,
+      p_credentials: data.credentials as never,
+      p_settings: data.settings as never,
       p_enabled: data.enabled,
     });
     if (error) throw new Error(error.message);
