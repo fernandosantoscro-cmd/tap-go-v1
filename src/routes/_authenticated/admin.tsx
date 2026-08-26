@@ -122,11 +122,20 @@ function AdminLayout() {
           </div>
         ) : establishment.isError ? (
           <div className="space-y-3">
-            <p className="text-sm text-destructive">Não foi possível carregar seu estabelecimento.</p>
-            <Button variant="outline" onClick={() => void establishment.refetch()}>
-              Tentar novamente
-            </Button>
+            <p className="text-sm font-medium text-destructive">Não foi possível carregar seu estabelecimento.</p>
+            <p className="text-xs text-muted-foreground">
+              {establishment.error instanceof Error ? establishment.error.message : "Erro desconhecido."}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" onClick={() => void establishment.refetch()}>
+                Tentar novamente
+              </Button>
+              <Button variant="ghost" onClick={() => void signOut()}>
+                Entrar de novo
+              </Button>
+            </div>
           </div>
+
 
         ) : (
           <Outlet />
