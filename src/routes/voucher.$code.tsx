@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { Bell, CheckCircle2, Clock, Download, Flame, ListOrdered, PartyPopper, Share2 } from "lucide-react";
+import { Bell, CheckCircle2, Clock, Download, FileText, Flame, ListOrdered, PartyPopper, Share2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -301,6 +301,20 @@ function VoucherPage() {
             <Share2 className="mr-2 size-4" /> Enviar comprovante
           </Button>
         </div>
+
+        {voucher.fiscal?.pdf_url && (
+          <Button asChild className="mt-3 w-full rounded-full">
+            <a href={voucher.fiscal.pdf_url} target="_blank" rel="noreferrer">
+              <FileText className="mr-2 size-4" /> Baixar nota fiscal
+              {voucher.fiscal.number ? ` nº ${voucher.fiscal.number}` : ""}
+            </a>
+          </Button>
+        )}
+        {voucher.order.payment_status === "pago" && !voucher.fiscal && voucher.order.fiscal_status === "pendente" && (
+          <p className="mt-3 text-center text-xs text-muted-foreground">
+            Nota fiscal em emissão — atualize esta tela em alguns instantes.
+          </p>
+        )}
 
         <Separator className="my-6" />
 
