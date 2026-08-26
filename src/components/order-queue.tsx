@@ -16,11 +16,14 @@ export interface OrderQueueProps {
   onList: () => Promise<OpenOrder[]>;
   /** Define quantas unidades do item já estão prontas (valor absoluto). */
   onSetReadyQuantity: (code: string, itemId: string, quantity: number) => Promise<{ error: string | null }>;
+  /** Aceita o pedido de preparo do cliente (item entra em preparo). */
+  onAcceptPrep?: (code: string, itemId: string) => Promise<{ error: string | null }>;
   /** Abre o pedido no console de retirada, sem escanear. */
   onOpenOrder?: (code: string) => void;
   /** Identifica a fila no cache (dono ou PIN do estande). */
   scope: string;
 }
+
 
 function pendingItems(order: OpenOrder): VoucherItem[] {
   return order.items.filter((item) => item.remaining_quantity > 0);
