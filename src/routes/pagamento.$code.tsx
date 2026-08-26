@@ -1,4 +1,4 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute, notFound, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { Check, Copy, Loader2, ShieldCheck } from "lucide-react";
@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { formatBRL } from "@/lib/format";
+import { createPixCharge, getPaymentConfig } from "@/lib/integrations.functions";
 import { confirmPayment, fetchVoucher } from "@/lib/tapgo.functions";
 import type { VoucherPayload } from "@/lib/tapgo-types";
 
@@ -55,17 +56,49 @@ function PaymentPage() {
   const initial = Route.useLoaderData() as VoucherPayload;
   const navigate = useNavigate();
   const pay = useServerFn(confirmPayment);
+  const getConfig = useServerFn(getPaymentConfig);
+  const pixCharge = useServerFn(createPixCharge);
   const [copied, setCopied] = useState(false);
   const [seconds, setSeconds] = useState(600);
 
   const isCard = initial.order.payment_method === "card";
   const payload = pixPayload(initial.order.code, initial.order.total_cents);
 
+  // O estabelecimento tem cobrança real (Mercado Pago) configurada?
+  const config = useQuery({
+    queryKey: ["payment-config", initial.order.code],
+    queryFn: () => getConfig({ data: { code: initial.order.code } }),
+    staleTime: 300_000,
+  });
+  const realPix = Boolean(config.data?.realPix) && !isCard;
+
+  // Acompanha o status do pedido (o webhook do Mercado Pago confirma o pagamento).
+  const statusPoll = useQuery({
+    queryKey: ["payment-status", initial.order.code],
+    queryFn: () => fetchVoucher({ data: { code: initial.order.code } }),
+    enabled: realPix,
+    refetchInterval: 3_000,
+  });
+
+  const pixMutation = useMutation({
+    mutationFn: () => pixCharge({ data: { code: initial.order.code } }),
+    onError: (error: Error) => toast.error(error.message || "Falha ao gerar o PIX"),
+  });
+  const charge = pixMutation.data;
+
   useEffect(() => {
-    if (initial.order.payment_status === "pago") {
+    if (realPix && !charge && !pixMutation.isPending && !pixMutation.isError) pixMutation.mutate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [realPix]);
+
+  useEffect(() => {
+    const paid =
+      initial.order.payment_status === "pago" || statusPoll.data?.order.payment_status === "pago";
+    if (paid) {
+      toast.success("Pagamento aprovado!");
       void navigate({ to: "/voucher/$code", params: { code: initial.order.code }, replace: true });
     }
-  }, [initial.order.payment_status, initial.order.code, navigate]);
+  }, [initial.order.payment_status, initial.order.code, navigate, statusPoll.data]);
 
   useEffect(() => {
     const timer = setInterval(() => setSeconds((value) => Math.max(0, value - 1)), 1000);
@@ -81,8 +114,9 @@ function PaymentPage() {
     onError: (error: Error) => toast.error(error.message || "Falha ao confirmar o pagamento"),
   });
 
+  const copyPayload = charge?.qr_code ?? payload;
   const copy = async () => {
-    await navigator.clipboard.writeText(payload);
+    await navigator.clipboard.writeText(copyPayload);
     setCopied(true);
     toast.success("Código PIX copiado");
     setTimeout(() => setCopied(false), 2500);
