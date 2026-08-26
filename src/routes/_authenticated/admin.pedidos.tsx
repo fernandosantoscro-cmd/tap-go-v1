@@ -33,6 +33,10 @@ function OrdersPage() {
   const setStatus = useSetOrderStatus();
   const queryClient = useQueryClient();
   const [filter, setFilter] = useState<(typeof FILTERS)[number]["key"]>("abertos");
+  const reissueFn = useServerFn(reissueFiscalDocument);
+  const reissue = useMutation({
+    mutationFn: (code: string) => reissueFn({ data: { code } }),
+  });
 
 
   useEffect(() => {
