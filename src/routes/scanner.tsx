@@ -30,6 +30,7 @@ import {
 import type { StaffSession } from "@/lib/tapgo-types";
 
 const PIN_KEY = "tapgo.staff.pin";
+const CODE_KEY = "tapgo.staff.code";
 const SESSION_KEY = "tapgo.staff.session";
 
 export const Route = createFileRoute("/scanner")({
@@ -56,6 +57,7 @@ export const Route = createFileRoute("/scanner")({
 
 function clearStaffStorage() {
   localStorage.removeItem(PIN_KEY);
+  localStorage.removeItem(CODE_KEY);
   localStorage.removeItem(SESSION_KEY);
 }
 
